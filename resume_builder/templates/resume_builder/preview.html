@@ -1,0 +1,84 @@
+{% extends 'base.html' %}
+
+{% block content %}
+
+<div class="container">
+    <div class="row">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h2>Resume Preview</h2>
+                    <div>
+                        <a href="{% url 'resume_wizard' step=1 %}" class="btn btn-primary">Edit Resume</a>
+                        <button class="btn btn-success" onclick="window.print()">Print/Save PDF</button>
+                    </div>
+                </div>
+                <div class="card-body" id="resume-content">
+                    <h1 class="text-center mb-4">{{ resume.full_name }}</h1>
+                    <div class="text-center mb-4">
+                        {{ resume.email }} | {{ resume.phone }} | {{ resume.location }}
+                    </div>
+                    
+                    <section class="mb-4">
+                        <h2>Career Summary</h2>
+                        <p>{{ resume.career_summary }}</p>
+                    </section>
+                    
+                    <section class="mb-4">
+                        <h2>Education</h2>
+                        {% for edu in resume.education.all %}
+                        <div class="mb-2">
+                            <h3>{{ edu.degree }}</h3>
+                            <p>{{ edu.institution }} - {{ edu.graduation_year }}</p>
+                        </div>
+                        {% endfor %}
+                    </section>
+                    
+                    <section class="mb-4">
+                        <h2>Skills</h2>
+                        <ul>
+                            {% for skill in resume.skills.all %}
+                            <li>{{ skill.name }}</li>
+                            {% endfor %}
+                        </ul>
+                    </section>
+                    
+                    <section class="mb-4">
+                        <h2>Work Experience</h2>
+                        {% for exp in resume.work_experiences.all %}
+                        <div class="mb-3">
+                            <h3>{{ exp.position }} at {{ exp.company }}</h3>
+                            <p class="text-muted">{{ exp.start_date }} - {% if exp.end_date %}{{ exp.end_date }}{% else %}Present{% endif %}</p>
+                            <p>{{ exp.description }}</p>
+                        </div>
+                        {% endfor %}
+                    </section>
+                    
+                    <section class="mb-4">
+                        <h2>Projects</h2>
+                        {% for project in resume.projects.all %}
+                        <div class="mb-3">
+                            <h3>{{ project.title }}</h3>
+                            <p>{{ project.description }}</p>
+                        </div>
+                        {% endfor %}
+                    </section>
+                    
+                    <section class="mb-4">
+                        <h2>Certificates</h2>
+                        {% for cert in resume.certificates.all %}
+                        <div class="mb-3">
+                            <h3>{{ cert.title }}</h3>
+                            <p>Issued by {{ cert.issuer }} on {{ cert.date_obtained }}</p>
+                            {% if cert.description %}
+                            <p>{{ cert.description }}</p>
+                            {% endif %}
+                        </div>
+                        {% endfor %}
+                    </section>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

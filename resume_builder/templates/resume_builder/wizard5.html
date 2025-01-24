@@ -1,0 +1,965 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OptiCV - ATS-Friendly Resume Builder</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.3.2/html2canvas.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            height: 100%;
+            background-color: #1e2a3a;
+        }
+        
+        .container {
+            display: flex;
+            width: 100%;
+            height: 100%;
+        }
+        
+        .form-container {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+            width: 40%;
+            box-sizing: border-box;
+            background-color: #2c3e50;
+            color: #ecf0f1;
+        }
+        
+        .resume-container {
+            width: 60%;
+            flex: 1;
+            background-color: #2c3e50;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            overflow-y: auto;
+            
+        }
+        
+        .form-step {
+            display: none;
+        }
+        
+        .form-step.active {
+            display: block;
+        }
+        
+        input, textarea {
+            width: 100%;
+            padding: 5px;
+            margin-bottom: 10px;
+        }
+        
+        button {
+            background-color: #B8860B;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            cursor: pointer;
+            margin-right: 10px;
+            margin-bottom: 10px;
+        }
+        
+        #resume {
+            width: 210mm;
+            height: 297mm;
+            background-color: #ffffff;
+            color: #333333;
+            font-family: 'Arial', sans-serif;
+            padding: 20mm;
+            box-sizing: border-box;
+            overflow: hidden;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+        
+        #resume .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 5mm;
+        }
+        
+        #resume .header-left {
+            text-align: left;
+        }
+        
+        #resume .header-right {
+            text-align: right;
+            font-size: 9pt;
+        }
+        
+        #resume .header h1 {
+            font-size: 24pt;
+            margin: 0;
+            color: #B8860B;
+            text-transform: uppercase;
+            line-height: 1.2;
+        }
+        
+        #resume .header h2 {
+            font-size: 14pt;
+            margin: 2mm 0;
+            color: #333333;
+            text-transform: uppercase;
+        }
+        
+        #resume .section {
+            margin-bottom: 8mm;
+        }
+        .placeholder-text {
+            color: #666666;
+            font-style: italic;
+        }
+        #resume .section h3 {
+            font-size: 12pt;
+            text-transform: uppercase;
+            color: #B8860B;
+            border-bottom: 0.5pt solid #B8860B;
+            padding-bottom: 1mm;
+            margin-bottom: 2mm;
+        }
+        
+        #resume .experience-item {
+            margin-bottom: 3mm;
+        }
+        
+        #resume .experience-item h4 {
+            font-size: 12pt;
+            margin: 0;
+            color: #B8860B;
+            font-weight: bold;
+        }
+        
+        #resume .experience-item p {
+            font-size: 12pt;
+            margin: 0.5mm 0;
+        }
+        
+        #resume ul {
+            padding-left: 4mm;
+            font-size: 12pt;
+            margin: 1mm 0;
+        }
+        
+        #resume .education-item,
+        #resume .certification-item {
+            margin-bottom: 2mm;
+        }
+        
+        #resume .education-item h4,
+        #resume .certification-item h4 {
+            margin-bottom: 0;
+        }
+        
+        #resume .education-item p,
+        #resume .certification-item p {
+            margin: 0;
+        }
+        
+        #resume .skills-list {
+            columns: 2;
+            -webkit-columns: 2;
+            -moz-columns: 2;
+        }
+        
+        #resume .skills-list li {
+            break-inside: avoid-column;
+            page-break-inside: avoid;
+            margin-bottom: 1mm;
+        }
+        
+        .enhance-btn {
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            margin-top: 5px;
+            cursor: pointer;
+        }
+        /* New: Styles for popup */
+    .popup {
+        display: none;
+        position: fixed;
+        z-index: 1000;
+        left: 0;
+        top: 0;
+        width: 100%;
+        height: 100%;
+        overflow: auto;
+        background-color: rgba(0,0,0,0.4);
+    }
+
+    .popup-content {
+        width: 95%;
+        max-width: none;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        padding-bottom: 60px; /* Add space for buttons */
+    }
+    #popupPreview {
+        width: 210mm;
+        min-height: 297mm;
+        transform: scale(0.8);
+        transform-origin: top center;
+        margin-bottom: 20px;
+    }
+    .popup-buttons {
+        position: fixed;
+        bottom: 20px;
+        left: 0;
+        right: 0;
+        display: flex;
+        justify-content: center;
+        gap: 20px;
+        background-color: white;
+        padding: 10px;
+        box-shadow: 0 -2px 10px rgba(0,0,0,0.1);
+    }
+    .close {
+        color: #aaa;
+        float: right;
+        font-size: 28px;
+        font-weight: bold;
+        cursor: pointer;
+    }
+    .close:hover,
+    .close:focus {
+        color: #000;
+        text-decoration: none;
+        cursor: pointer;
+    }
+    /* New: Styles for education and certificate items */
+    .education-items, .certificate-items {
+        display: flex;
+        flex-wrap: wrap;
+    }
+
+    .education-item, .certificate-item {
+        width: 50%;
+        box-sizing: border-box;
+        padding: 0 10px;
+    }
+    .education-container, .certificate-container {
+        margin-top: 15px;
+    }
+    
+    .required-field::after {
+        content: " *";
+        color: red;
+    }
+    
+    .error-message {
+        color: red;
+        font-size: 12px;
+        margin-top: -8px;
+        margin-bottom: 10px;
+        display: none;
+    }
+    #downloadConfirmation {
+        display: none;
+        position: fixed;
+        z-index: 2000;
+        left: 0;
+        top: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0,0,0,0.6);
+    }
+
+    .confirmation-content {
+        background-color: #fefefe;
+        margin: 15% auto;
+        padding: 20px;
+        border: 1px solid #888;
+        width: 300px;
+        text-align: center;
+    }
+
+    .confirmation-btn {
+        margin: 10px;
+        padding: 10px 20px;
+        cursor: pointer;
+    }
+    
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="form-container">
+            <div class="form-step active" id="step1">
+                <h2>Personal Information</h2>
+                
+                <label class="required-field" for="name">Full Name</label>
+                <input type="text" id="name" required>
+                <div class="error-message">Please enter your full name</div>
+                
+                <label class="required-field" for="title">Professional Title</label>
+                <input type="text" id="title" required>
+                <div class="error-message">Please enter your professional title</div>
+                
+                <label class="required-field" for="email">Email</label>
+                <input type="email" id="email" required>
+                <div class="error-message">Please enter a valid email address</div>
+                
+                <label for="phone">Phone</label>
+                <input type="tel" id="phone">
+                
+                <label for="address">Address</label>
+                <input type="text" id="address">
+                
+                <label for="website">Website</label>
+                <input type="url" id="website">
+                
+                <label class="required-field" for="summary">Professional Summary</label>
+                <textarea id="summary" required rows="4"></textarea>
+                <div class="error-message">Please enter your professional summary</div>
+                <button id="enhance-summary" type="button">Enhance with AI</button>
+                <button type="button" onclick="nextStep(2)">Next</button>
+            </div>
+
+            <div class="form-step" id="step2">
+                <h2>Experience</h2>
+                <div id="experience-container">
+                    <div class="experience-entry">
+                        <label class="required-field" for="job1Title">Job Title</label>
+                        <input type="text" id="job1Title" class="job-title" required>
+                        <div class="error-message">Please enter your job title</div>
+                        
+                        <label class="required-field" for="job1Company">Company</label>
+                        <input type="text" id="job1Company" class="company" required>
+                        <div class="error-message">Please enter the company name</div>
+                        
+                        <label class="required-field" for="job1Duration">Duration</label>
+                        <input type="text" id="job1Duration" class="duration" required>
+                        <div class="error-message">Please enter the duration</div>
+                        
+                        <label class="required-field" for="job1Description">Job Description</label>
+                        <textarea id="job1Description" class="job-description" required rows="4"></textarea>
+                        <div class="error-message">Please enter the job description</div>
+                        <button id="enhance-job1Description" type="button">Enhance with AI</button>
+                    </div>
+                </div>
+                <button type="button" onclick="addExperience()">Add Experience</button>
+                <button type="button" onclick="prevStep(1)">Previous</button>
+                <button type="button" onclick="nextStep(3)">Next</button>
+            </div>
+
+            <div class="form-step" id="step3">
+                <h2>Education</h2>
+                <div id="education-container">
+                    <div class="education-entry">
+                        <label class="required-field">Degree</label>
+                        <input type="text" class="degree" required>
+                        <div class="error-message">This field is required</div>
+                        
+                        <label class="required-field">University</label>
+                        <input type="text" class="university" required>
+                        <div class="error-message">This field is required</div>
+                        
+                        <label class="required-field">Year</label>
+                        <input type="text" class="education-year" required>
+                        <div class="error-message">This field is required</div>
+                        
+                        <label>GPA</label>
+                        <input type="text" class="gpa">
+                    </div>
+                </div>
+                <button type="button" onclick="addEducation()">Add Education</button>
+                <button type="button" onclick="prevStep(2)">Previous</button>
+                <button type="button" onclick="nextStep(4)">Next</button>
+            </div>
+
+            <div class="form-step" id="step4">
+                <h2>Certificates</h2>
+                <div id="certificate-container">
+                    <div class="certificate-entry">
+                        <label class="required-field">Certificate Title</label>
+                        <input type="text" class="cert-title" required>
+                        <div class="error-message">This field is required</div>
+                        
+                        <label class="required-field">Issuing Organization</label>
+                        <input type="text" class="cert-issuer" required>
+                        <div class="error-message">This field is required</div>
+                        
+                        <label class="required-field">Year</label>
+                        <input type="text" class="cert-year" required>
+                        <div class="error-message">This field is required</div>
+                    </div>
+                </div>
+                <button type="button" onclick="addCertificate()">Add Certificate</button>
+                <button type="button" onclick="prevStep(3)">Previous</button>
+                <button type="button" onclick="nextStep(5)">Next</button>
+            </div>
+
+            <div class="form-step" id="step5">
+                <h2>Skills</h2>
+                <label class="required-field" for="skills">Skills (one per line)</label>
+                <textarea id="skills" required rows="6"></textarea>
+                <div class="error-message">Please enter at least one skill</div>
+                
+                <button type="button" onclick="prevStep(4)">Previous</button>
+                <button type="button" onclick="previewResume()">Preview Resume</button>
+            </div>
+        </div>
+        
+        <div class="resume-container">
+            <div id="resume"></div>
+        </div>
+    </div>
+
+    <div id="resumePopup" class="popup">
+        <div class="popup-content">
+            <span class="close">&times;</span>
+            <div id="popupPreview"></div>
+            <div class="popup-buttons">
+            <button id="keepEditingBtn">Keep Editing</button>
+            <button id="downloadBtn">Download PDF</button>
+        </div>
+    </div>
+    </div>
+    <div id="downloadConfirmation">
+        <div class="confirmation-content">
+            <p>Your resume has been successfully downloaded!</p>
+            <button class="confirmation-btn" id="continueBtn">Continue Editing</button>
+            <button class="confirmation-btn" id="homeBtn">Go to Home</button>
+        </div>
+    </div>
+
+    <script>
+        let currentStep = 1;
+        const totalSteps = 5;
+        
+        function nextStep(step) {
+            if (validateStep(currentStep)) {
+                document.getElementById(`step${currentStep}`).classList.remove('active');
+                document.getElementById(`step${step}`).classList.add('active');
+                currentStep = step;
+                updateResume();
+            }
+        }
+        
+        function prevStep(step) {
+            document.getElementById(`step${currentStep}`).classList.remove('active');
+            document.getElementById(`step${step}`).classList.add('active');
+            currentStep = step;
+            updateResume();
+        }
+        
+        function validateStep(step) {
+            const stepElement = document.getElementById(`step${step}`);
+            const requiredInputs = stepElement.querySelectorAll('[required]');
+            let isValid = true;
+        
+            requiredInputs.forEach(input => {
+                const errorMessage = input.nextElementSibling;
+                if (!input.value.trim()) {
+                    isValid = false;
+                    input.classList.add('error');
+                    if (errorMessage && errorMessage.classList.contains('error-message')) {
+                        errorMessage.style.display = 'block';
+                    }
+                } else {
+                    input.classList.remove('error');
+                    if (errorMessage && errorMessage.classList.contains('error-message')) {
+                        errorMessage.style.display = 'none';
+                    }
+                }
+            });
+        
+            return isValid;
+        }
+        
+        function addExperience() {
+            const container = document.getElementById('experience-container');
+            const newEntry = document.createElement('div');
+            newEntry.className = 'experience-entry';
+            newEntry.innerHTML = `
+                <hr>
+                <label class="required-field">Job Title</label>
+                <input type="text" class="job-title" placeholder="Job Title" required>
+                <div class="error-message">This field is required</div>
+                
+                <label class="required-field">Company</label>
+                <input type="text" class="company" placeholder="Company" required>
+                <div class="error-message">This field is required</div>
+                
+                <label class="required-field">Duration</label>
+                <input type="text" class="duration" placeholder="Duration" required>
+                <div class="error-message">This field is required</div>
+                
+                <label class="required-field">Job Description</label>
+                <textarea class="job-description" placeholder="Job Description" required></textarea>
+                <div class="error-message">This field is required</div>
+                
+                <button onclick="removeEntry(this)" type="button">Remove</button>
+            `;
+            container.appendChild(newEntry);
+            addEventListenersToEntry(newEntry);
+            updateResume();
+        }
+        
+        function addEducation() {
+            const container = document.getElementById('education-container');
+            const newEntry = document.createElement('div');
+            newEntry.className = 'education-entry';
+            newEntry.innerHTML = `
+                <hr>
+                <label class="required-field">Degree</label>
+                <input type="text" class="degree" required>
+                <div class="error-message">This field is required</div>
+                
+                <label class="required-field">University</label>
+                <input type="text" class="university" required>
+                <div class="error-message">This field is required</div>
+                
+                <label class="required-field">Year</label>
+                <input type="text" class="education-year" required>
+                <div class="error-message">This field is required</div>
+                
+                <label>GPA</label>
+                <input type="text" class="gpa">
+                
+                <button onclick="removeEntry(this)" type="button">Remove</button>
+            `;
+            container.appendChild(newEntry);
+            addEventListenersToEntry(newEntry);
+            updateResume();
+        }
+        
+        function addCertificate() {
+            const container = document.getElementById('certificate-container');
+            const newEntry = document.createElement('div');
+            newEntry.className = 'certificate-entry';
+            newEntry.innerHTML = `
+                <hr>
+                <label class="required-field">Certificate Title</label>
+                <input type="text" class="cert-title" required>
+                <div class="error-message">This field is required</div>
+                
+                <label class="required-field">Issuing Organization</label>
+                <input type="text" class="cert-issuer" required>
+                <div class="error-message">This field is required</div>
+                
+                <label class="required-field">Year</label>
+                <input type="text" class="cert-year" required>
+                <div class="error-message">This field is required</div>
+                
+                <button onclick="removeEntry(this)" type="button">Remove</button>
+            `;
+            container.appendChild(newEntry);
+            addEventListenersToEntry(newEntry);
+            updateResume();
+        }
+        
+        function addEventListenersToEntry(entry) {
+            entry.querySelectorAll('input, textarea').forEach(field => {
+                field.addEventListener('input', updateResume);
+                field.addEventListener('change', updateResume);
+            });
+        }
+        
+        function updateResume() {
+            const resumeDiv = document.getElementById('resume');
+            if (!resumeDiv) {
+                console.error('Resume div not found');
+                return;
+            }
+        
+            function getValueOrPlaceholder(selector, placeholder, context = document) {
+                const element = context.querySelector(selector);
+                const value = element ? element.value.trim() : '';
+                return value || `<span class="placeholder-text">${placeholder}</span>`;
+            }
+        
+            const skillsValue = getValueOrPlaceholder('#skills', '');
+            const skills = skillsValue !== '' ? 
+                skillsValue.split('\n')
+                    .filter(skill => skill.trim() !== '')
+                    .map(skill => `<li>${skill.trim()}</li>`)
+                    .join('') :
+                `<li class="placeholder-text">Operating Microsoft Excel</li>
+                 <li class="placeholder-text">Good communication skill</li>
+                 <li class="placeholder-text">Structured Query Language (SQL)</li>
+                 <li class="placeholder-text">Able to work in a team</li>
+                 <li class="placeholder-text">Statistics</li>
+                 <li class="placeholder-text">Great problem solving skill</li>`;
+        
+                 const experienceItems = Array.from(document.querySelectorAll('.experience-entry')).map(entry => `
+                <div class="experience-item">
+                    <h4>${getValueOrPlaceholder('.job-title', 'JOB TITLE', entry)}</h4>
+                    <p><strong>${getValueOrPlaceholder('.company', 'COMPANY NAME', entry)}</strong></p>
+                    <p>${getValueOrPlaceholder('.duration', 'DURATION', entry)}</p>
+                    <ul>
+                        <li>${getValueOrPlaceholder('.job-description', 'JOB DESCRIPTION', entry)}</li>
+                    </ul>
+                </div>
+            `).join('');
+        
+            const educationItems = Array.from(document.querySelectorAll('.education-entry')).map(entry => `
+                <div class="education-item">
+                    <h4>${getValueOrPlaceholder('.university', 'UNIVERSITY NAME', entry)}</h4>
+                    <p>${getValueOrPlaceholder('.degree', 'DEGREE', entry)}</p>
+                    <p>${getValueOrPlaceholder('.education-year', 'YEAR', entry)}</p>
+                    <p>GPA: ${getValueOrPlaceholder('.gpa', 'GPA', entry)}</p>
+                </div>
+            `).join('');
+        
+            const certificateItems = Array.from(document.querySelectorAll('.certificate-entry')).map(entry => `
+                <div class="certification-item">
+                    <h4>${getValueOrPlaceholder('.cert-title', 'CERTIFICATE TITLE', entry)}</h4>
+                    <p>${getValueOrPlaceholder('.cert-issuer', 'ISSUING ORGANIZATION', entry)}</p>
+                    <p>${getValueOrPlaceholder('.cert-year', 'YEAR', entry)}</p>
+                </div>
+            `).join('');
+        
+            const resumeHTML = `
+                <div class="header">
+                    <div class="header-left">
+                        <h1>${getValueOrPlaceholder('#name', 'CONNOR HAMILTON')}</h1>
+                        <h2>${getValueOrPlaceholder('#title', 'SENIOR DATA ANALYST')}</h2>
+                    </div>
+                    <div class="header-right">
+                        <p>${getValueOrPlaceholder('#website', 'www.reallygreatsite.com')}</p>
+                        <p>${getValueOrPlaceholder('#email', 'hello@reallygreatsite.com')}</p>
+                        <p>${getValueOrPlaceholder('#address', '123 Anywhere St., Any City')}</p>
+                        <p>${getValueOrPlaceholder('#phone', '+123-456-7890')}</p>
+                    </div>
+                </div>
+                <div class="section">
+                    <h3>SUMMARY</h3>
+                    <p>${getValueOrPlaceholder('#summary', 'Seasoned professional with years of experience in driving operational excellence and delivering exceptional results.')}</p>
+                </div>
+                <div class="section">
+                    <h3>EXPERIENCE</h3>
+                    ${experienceItems}
+                </div>
+                <div class="section">
+                    <h3>EDUCATION</h3>
+                    ${educationItems}
+                </div>
+                <div class="section">
+                    <h3>CERTIFICATES</h3>
+                    ${certificateItems}
+                </div>
+                <div class="section">
+                    <h3>SKILLS</h3>
+                    <ul class="skills-list">
+                        ${skills}
+                    </ul>
+                </div>
+            `;
+        
+            resumeDiv.innerHTML = resumeHTML;
+            console.log('Resume updated successfully');
+        }
+    
+        function removeEntry(button) {
+            button.closest('.experience-entry, .education-entry, .certificate-entry').remove();
+            updateResume();
+        }
+        
+        function previewResume() {
+            updateResume(); // Ensure the resume is up-to-date
+            const popup = document.getElementById('resumePopup');
+            const popupPreview = document.getElementById('popupPreview');
+            const resumeContent = document.getElementById('resume').cloneNode(true);
+            
+            popupPreview.innerHTML = '';
+            popupPreview.appendChild(resumeContent);
+            
+            popup.style.display = 'block';
+        }
+        function previewResume() {
+            updateResume(); // Ensure the resume is up-to-date
+            const popup = document.getElementById('resumePopup');
+            const popupPreview = document.getElementById('popupPreview');
+            const resumeContent = document.getElementById('resume').cloneNode(true);
+            
+            popupPreview.innerHTML = '';
+            popupPreview.appendChild(resumeContent);
+            
+            popup.style.display = 'block';
+        }
+           
+        function downloadResume() {
+            const { jsPDF } = window.jspdf;
+            
+            // Create PDF with A4 dimensions
+            const pdf = new jsPDF({
+                orientation: 'portrait',
+                unit: 'mm',
+                format: 'a4',
+                compress: true
+            });
+        
+            // PDF dimensions
+            const pageWidth = pdf.internal.pageSize.getWidth();
+            const pageHeight = pdf.internal.pageSize.getHeight();
+            const margin = 20; // 20mm margins
+            
+            // Get resume data
+            const name = document.getElementById('name').value || 'CONNOR HAMILTON';
+            const title = document.getElementById('title').value || 'SENIOR DATA ANALYST';
+            const email = document.getElementById('email').value || 'hello@reallygreatsite.com';
+            const phone = document.getElementById('phone').value || '+123-456-7890';
+            const website = document.getElementById('website').value || 'www.reallygreatsite.com';
+            const address = document.getElementById('address').value || '123 Anywhere St., Any City';
+            const summary = document.getElementById('summary').value || 'Seasoned professional...';
+        
+            // Function to add a line after each section heading
+            function addLine(yPos) {
+                pdf.setDrawColor(184, 134, 11); // Golden color (#B8860B)
+                pdf.setLineWidth(0.5);
+                pdf.line(margin, yPos + 2, pageWidth - margin, yPos + 2);
+                return yPos + 5; // Return new Y position after line
+            }
+        
+            // Set fonts
+            pdf.setFont('helvetica', 'bold');
+            
+            // Header section
+            pdf.setFontSize(24);
+            pdf.setTextColor(184, 134, 11); // Golden color (#B8860B)
+            pdf.text(name.toUpperCase(), margin, margin + 10);
+            
+            pdf.setFontSize(16);
+            pdf.setTextColor(51, 51, 51); // Dark gray
+            pdf.text(title.toUpperCase(), margin, margin + 20);
+            
+            // Contact information (right-aligned)
+            pdf.setFontSize(10);
+            pdf.setFont('helvetica', 'normal');
+            const contactInfo = [website, email, phone, address];
+            contactInfo.forEach((info, index) => {
+                pdf.text(info, pageWidth - margin, margin + (index * 5), { align: 'right' });
+            });
+        
+            // Summary section
+            let yPos = margin + 35;
+            pdf.setFont('helvetica', 'bold');
+            pdf.setFontSize(12);
+            pdf.setTextColor(184, 134, 11);
+            pdf.text('SUMMARY', margin, yPos);
+            yPos = addLine(yPos);
+            
+            pdf.setFont('helvetica', 'normal');
+            pdf.setTextColor(51, 51, 51);
+            pdf.setFontSize(10);
+            yPos += 2;
+            const summaryLines = pdf.splitTextToSize(summary, pageWidth - (margin * 2));
+            pdf.text(summaryLines, margin, yPos);
+            yPos += (summaryLines.length * 5) + 5;
+        
+            // Experience section
+            pdf.setFont('helvetica', 'bold');
+            pdf.setFontSize(12);
+            pdf.setTextColor(184, 134, 11);
+            pdf.text('EXPERIENCE', margin, yPos);
+            yPos = addLine(yPos);
+        
+            // Get all experience entries
+            const experienceEntries = document.querySelectorAll('.experience-entry');
+            experienceEntries.forEach(entry => {
+                const jobTitle = entry.querySelector('.job-title').value || 'Job Title';
+                const company = entry.querySelector('.company').value || 'Company';
+                const duration = entry.querySelector('.duration').value || 'Duration';
+                const description = entry.querySelector('.job-description').value || 'Job Description';
+        
+                pdf.setFont('helvetica', 'bold');
+                pdf.setFontSize(11);
+                pdf.setTextColor(51, 51, 51);
+                pdf.text(jobTitle, margin, yPos);
+                yPos += 5;
+        
+                pdf.setFont('helvetica', 'normal');
+                pdf.setFontSize(10);
+                pdf.text(company, margin, yPos);
+                yPos += 4;
+                pdf.text(duration, margin, yPos);
+                yPos += 4;
+        
+                const descLines = pdf.splitTextToSize(description, pageWidth - (margin * 2) - 5);
+                pdf.text('•', margin, yPos);
+                pdf.text(descLines, margin + 5, yPos);
+                yPos += (descLines.length * 4) + 8;
+        
+                // Add new page if needed
+                if (yPos > pageHeight - margin) {
+                    pdf.addPage();
+                    yPos = margin;
+                }
+            });
+        
+            // Education section
+            pdf.setFont('helvetica', 'bold');
+            pdf.setFontSize(12);
+            pdf.setTextColor(184, 134, 11);
+            pdf.text('EDUCATION', margin, yPos);
+            yPos = addLine(yPos);
+        
+            const educationEntries = document.querySelectorAll('.education-entry');
+            educationEntries.forEach(entry => {
+                const degree = entry.querySelector('.degree').value || 'Degree';
+                const university = entry.querySelector('.university').value || 'University';
+                const year = entry.querySelector('.education-year').value || 'Year';
+                const gpa = entry.querySelector('.gpa').value || '';
+        
+                pdf.setFont('helvetica', 'bold');
+                pdf.setFontSize(11);
+                pdf.setTextColor(51, 51, 51);
+                pdf.text(university, margin, yPos);
+                yPos += 4;
+        
+                pdf.setFont('helvetica', 'normal');
+                pdf.setFontSize(10);
+                pdf.text(degree, margin, yPos);
+                yPos += 4;
+                pdf.text(year + (gpa ? ` | GPA: ${gpa}` : ''), margin, yPos);
+                yPos += 8;
+        
+                if (yPos > pageHeight - margin) {
+                    pdf.addPage();
+                    yPos = margin;
+                }
+            });
+        
+            // Skills section
+            const skills = document.getElementById('skills').value.split('\n').filter(skill => skill.trim());
+            if (skills.length > 0) {
+                pdf.setFont('helvetica', 'bold');
+                pdf.setFontSize(12);
+                pdf.setTextColor(184, 134, 11);
+                pdf.text('SKILLS', margin, yPos);
+                yPos = addLine(yPos);
+        
+                pdf.setFont('helvetica', 'normal');
+                pdf.setFontSize(10);
+                pdf.setTextColor(51, 51, 51);
+        
+                // Create two columns for skills
+                const skillsPerColumn = Math.ceil(skills.length / 2);
+                const columnWidth = (pageWidth - (margin * 3)) / 2;
+                
+                skills.forEach((skill, index) => {
+                    const xPos = index >= skillsPerColumn ? margin + columnWidth + margin : margin;
+                    const localYPos = index >= skillsPerColumn ? 
+                        yPos + ((index - skillsPerColumn) * 5) : 
+                        yPos + (index * 5);
+                    
+                    pdf.text('•', xPos, localYPos);
+                    pdf.text(skill.trim(), xPos + 5, localYPos);
+                });
+            }
+        
+            // Save the PDF
+            pdf.save('professional_resume.pdf');
+            
+            // Show confirmation
+            document.getElementById('resumePopup').style.display = 'none';
+            document.getElementById('downloadConfirmation').style.display = 'block';
+        }
+        
+        document.addEventListener('DOMContentLoaded', function() {
+            // ... (previous DOMContentLoaded code) ...
+        
+            document.getElementById('downloadBtn').addEventListener('click', downloadResume);
+        
+            // ... (rest of the DOMContentLoaded code) ...
+        });
+        function enhanceText(id) {
+            const enhanceButton = document.getElementById('enhance-' + id.split('-')[0]);
+            const text = document.getElementById(id).value;
+        
+            enhanceButton.textContent = 'Enhancing...';
+            enhanceButton.disabled = true;
+        
+            fetch('/enhance-text/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                    'X-CSRFToken': getCookie('csrftoken')
+                },
+                body: `text=${encodeURIComponent(text)}`
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+                return response.json();
+            })
+            .then(data => {
+                document.getElementById(id).value = data.enhanced_text;
+                updateResume();
+            })
+            .catch(error => {
+                console.error('Error:', error);
+            })
+            .finally(() => {
+                enhanceButton.textContent = 'Enhance with AI';
+                enhanceButton.disabled = false;
+            });
+        }
+        
+        function getCookie(name) {
+            let cookieValue = null;
+            if (document.cookie && document.cookie !== '') {
+                const cookies = document.cookie.split(';');
+                for (let i = 0; i < cookies.length; i++) {
+                    const cookie = cookies[i].trim();
+                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                        break;
+                    }
+                }
+            }
+            return cookieValue;
+        }
+        
+        document.addEventListener('DOMContentLoaded', function() {
+            updateResume();
+            
+            const formFields = document.querySelectorAll('input, textarea');
+            formFields.forEach(field => {
+                field.addEventListener('input', updateResume);
+                field.addEventListener('change', updateResume);
+            });
+        
+            document.querySelectorAll('.form-container').forEach(container => {
+                container.addEventListener('input', updateResume);
+                container.addEventListener('change', updateResume);
+            });
+        
+        
+            document.querySelector('.close').addEventListener('click', function() {
+                document.getElementById('resumePopup').style.display = 'none';
+            });
+    
+            document.getElementById('keepEditingBtn').addEventListener('click', function() {
+                document.getElementById('resumePopup').style.display = 'none';
+            });
+    
+            document.getElementById('downloadBtn').addEventListener('click', downloadResume);
+            
+            document.getElementById('enhance-summary').addEventListener('click', () => enhanceText('summary'));
+            document.getElementById('enhance-job1Description').addEventListener('click', () => enhanceText('job1Description'));
+    
+            document.getElementById('continueBtn').addEventListener('click', function() {
+                document.getElementById('downloadConfirmation').style.display = 'none';
+            });
+    
+            document.getElementById('homeBtn').addEventListener('click', function() {
+                window.location.href = '{% url "home" %}';
+            });
+        });
+    </script>
+    </body>
+    </html>

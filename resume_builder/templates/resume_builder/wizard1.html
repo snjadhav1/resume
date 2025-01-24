@@ -1,0 +1,903 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OptiCV - ATS-Friendly Resume Builder</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <style>
+        body, html {
+            margin: 0;
+            padding: 0;
+            font-family: Arial, sans-serif;
+            height: 100%;
+            background-color: #1a1a2e;
+            color: #ffffff;
+        }
+        .container {
+            
+            display: flex;
+            height: 100%;
+        }
+        #resumeForm{
+            width: 90%;
+            padding: 30px;
+        }
+        .edit-pane, .preview-pane {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+        }
+        .edit-pane {
+            background-color: #16213e;
+        }
+        .preview-pane {
+            background-color: #0f3460;
+            border-left: 1px solid #ccc;
+        }
+        input, textarea {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 15px;
+            background-color: #1a1a2e;
+            color: #ffffff;
+            border: 1px solid #0f3460;
+            border-radius: 5px;
+        }
+        label {
+            font-weight: bold;
+            color: #e94560;
+            display: block;
+            margin-bottom: 5px;
+        }
+        #preview {
+            font-family: Arial, sans-serif;
+            font-size: 12px;
+            line-height: 1.2;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 30px;
+            box-sizing: border-box;
+            background-color: white;
+            color: black;
+            height:100%;%
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+        #preview h1 {
+            text-align: center;
+            margin-bottom: 5px;
+            font-size: 18px;
+            text-transform: uppercase;
+        }
+        #preview .contact-info {
+            text-align: center;
+            margin-bottom: 20px;
+            font-size: 11px;
+        }
+        #preview h2 {
+            text-transform: uppercase;
+            font-size: 14px;
+            border-bottom: 1px solid black;
+            padding-bottom: 5px;
+            margin-top: 20px;
+            margin-bottom: 10px;
+        }
+        #preview .section {
+            margin-bottom: 15px;
+        }
+        #preview .job-title, #preview .degree {
+            font-weight: bold;
+        }
+        #preview .company, #preview .university {
+            font-style: normal;
+        }
+        #preview .date {
+            float: right;
+        }
+        #preview ul {
+            margin-top: 5px;
+            margin-bottom: 5px;
+            padding-left: 20px;
+        }
+        #preview li {
+            margin-bottom: 3px;
+        }
+        #downloadBtn {
+            display: block;
+            width: 100%;
+            padding: 10px;
+            background-color: #e94560;
+            color: white;
+            text-align: center;
+            text-decoration: none;
+            font-weight: bold;
+            margin-top: 20px;
+            cursor: pointer;
+            border: none;
+            border-radius: 5px;
+        }
+        .skills-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 5px;
+        }
+        .step {
+            display: none;
+        }
+        .step.active {
+            display: block;
+        }
+        .step-nav {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 20px;
+        }
+        .step-nav button {
+            padding: 10px 20px;
+            background-color: #0f3460;
+            color: white;
+            border: none;
+            cursor: pointer;
+            border-radius: 5px;
+        }
+        .step-nav button:disabled {
+            background-color: #1a1a2e;
+            cursor: not-allowed;
+        }
+        input::placeholder, textarea::placeholder {
+            color: #999;
+            font-style: italic;
+        }
+        .placeholder {
+            color: #999;
+            font-style: italic;
+        }
+        h2, h3 {
+            color: #e94560;
+        }
+        .error {
+            color: #ff0000;
+            font-size: 0.8em;
+            margin-top: -10px;
+            margin-bottom: 10px;
+        }
+        #downloadBtn {
+            display: none;
+        }
+        #postDownloadModal {
+            display: none;
+            position: fixed;
+            z-index: 1;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0,0,0,0.4);
+        }
+        .modal-content {
+            background-color: #fefefe;
+            margin: 15% auto;
+            padding: 20px;
+            border: 1px solid #888;
+            width: 80%;
+            max-width: 500px;
+        }
+        .modal-content button {
+            margin: 10px;
+            padding: 10px 20px;
+        }
+        #downloadConfirmation {
+            display: none;
+            position: fixed;
+            z-index: 2;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0,0,0,0.4);
+            animation: fadeIn 0.3s;
+        }
+        
+        #downloadConfirmation .modal-content {
+            background-color: #fefefe;
+            margin: 15% auto;
+            padding: 20px;
+            border: 1px solid #888;
+            width: 60%;
+            max-width: 500px;
+            text-align: center;
+            animation: bounceIn 0.5s;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        
+        @keyframes bounceIn {
+            0% { transform: scale(0.8); opacity: 0; }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); opacity: 1; }
+        }
+        
+        .confirmation-message h2 {
+            color: #4CAF50;
+            margin-bottom: 10px;
+        }
+        
+        .confirmation-message p {
+            margin-bottom: 20px;
+        }
+        
+        .button-container button {
+            padding: 10px 20px;
+            font-size: 16px;
+            cursor: pointer;
+            margin: 0 10px;
+        }
+        
+        #backToHomeBtn {
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+        }
+        
+        #continueEditingBtn {
+            background-color: #008CBA;
+            color: white;
+            border: none;
+        }
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0,0,0,0.4);
+        }
+        
+        .modal-content {
+            background-color: #fefefe;
+            margin: 15% auto;
+            padding: 20px;
+            border: 1px solid #888;
+            width: 80%;
+            max-width: 600px;
+        }
+        
+        .button-container {
+            text-align: right;
+            margin-top: 20px;
+        }
+        
+        .button-container button {
+            margin-left: 10px;
+        }
+            #resumePopup {
+                display: none;
+                position: fixed;
+                z-index: 1000;
+                left: 0;
+                top: 0;
+                width: 100%;
+                height: 100%;
+                background-color: rgba(0,0,0,0.8);
+                overflow: auto;
+            }
+            
+            .resume-preview {
+                background-color: white;
+                margin: 5% auto;
+                padding: 40px;
+                width: 80%;
+                max-width: 800px;
+                box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+                font-family: Arial, sans-serif;
+                color: black;
+            }
+            
+            .resume-preview h1 {
+                text-align: center;
+                color: #333;
+                margin-bottom: 10px;
+            }
+            
+            .resume-preview .contact-info {
+                text-align: center;
+                color: #666;
+                margin-bottom: 20px;
+            }
+            
+            .resume-preview h2 {
+                color: #e94560;
+                border-bottom: 2px solid #e94560;
+                padding-bottom: 5px;
+                margin-top: 20px;
+            }
+            
+            .resume-preview .section {
+                margin-bottom: 20px;
+            }
+            
+            .resume-preview .job-title, .resume-preview .degree {
+                font-weight: bold;
+            }
+            
+            .resume-preview .company, .resume-preview .university {
+                font-style: italic;
+            }
+            
+            .resume-preview .date {
+                float: right;
+                color: #666;
+            }
+            
+            .resume-preview ul {
+                padding-left: 20px;
+            }
+            
+            .resume-preview .skills-grid {
+                display: grid;
+                grid-template-columns: repeat(3, 1fr);
+                gap: 10px;           
+               
+           
+        }
+
+        
+        .button-container {
+            text-align: center;
+            margin-top: 20px;
+        }
+        
+        .button-container button {
+            padding: 10px 20px;
+            font-size: 16px;
+            margin: 0 10px;
+            cursor: pointer;
+        }
+        
+        #downloadPopupBtn {
+            background-color: #e94560;
+            color: white;
+            border: none;
+        }
+        
+        #keepEditingBtn {
+            background-color: #333;
+            color: white;
+            border: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="edit-pane">
+            <h2>Edit Resume</h2>
+            <form id="resumeForm">
+                <div class="step active" id="step1">
+                    <h3>Personal Information</h3>
+                    <label for="name">Name:</label>
+                    <input type="text" id="name" placeholder="FIRST NAME LAST NAME" required>
+                    <div class="error" id="name-error"></div>
+                    
+                    <label for="contact">Contact Info:</label>
+                    <input type="text" id="contact" placeholder="(XXX) XXX-XXXX | ProfessionalEmail@gmail.com | linkedin.com/in | City, State" required>
+                    <div class="error" id="contact-error"></div>
+                </div>
+
+                <div class="step" id="step2">
+                    <h3>Education</h3>
+                    <label for="degree">Degree:</label>
+                    <input type="text" id="degree" placeholder="Degree, Major (e.g Bachelor of Science, Communication Studies)" required>
+                    <div class="error" id="degree-error"></div>
+                    
+                    <label for="university">University:</label>
+                    <input type="text" id="university" placeholder="Name of University, Institution, City, State" required>
+                    <div class="error" id="university-error"></div>
+                    
+                    <label for="grad-date">Graduation Date:</label>
+                    <input type="text" id="grad-date" placeholder="Graduating Month Year" required>
+                    <div class="error" id="grad-date-error"></div>
+                    
+                    <label for="edu-details">Education Details:</label>
+                    <input type="text" id="edu-details" placeholder="Minor: XXXXX | GPA: x.x/4.0" required>
+                    <div class="error" id="edu-details-error"></div>
+                </div>
+
+                <div class="step" id="step3">
+                    <h3>Work Experience</h3>
+                    <label for="job-title">Job Title:</label>
+                    <input type="text" id="job-title" placeholder="Position Title">
+                    
+                    <label for="company">Company:</label>
+                    <input type="text" id="company" placeholder="Organization/Company Name, City, State">
+                    
+                    <label for="job-date">Employment Period:</label>
+                    <input type="text" id="job-date" placeholder="Month Year - Month Year">
+                    
+                    <label for="job-details">Job Details:</label>
+                    <textarea id="job-details" rows="5" placeholder="• Write your main highlighted accomplishments.
+• Think about how your task/project helped the company do better and how you added value to the company.
+• Follow the format &quot;Performed X by doing Y resulting in Z&quot;, quantify with numbers, percentages, other data where you can
+• Start with strong action verbs and avoid using responsible, helped, researched or assisted (review our Guide to Using Action Verbs)."></textarea>
+<button type="button" id="enhance">Enhance with AI</button>
+                </div>
+
+                <div class="step" id="step4">
+                    <h3>Certifications</h3>
+                    <label for="certifications">Certifications:</label>
+                    <textarea id="certifications" rows="3" placeholder="• Name of certification, Issuing Company or Organization time period for certification (e.g. expiration) or when issued
+• E.g.: CPR Certification, American Red Cross Expires Month Year
+• Google UX Design Certificate, Coursera Issued Month Year"></textarea>
+
+                </div>
+
+                <div class="step" id="step5">
+                    <h3>Technical Skills</h3>
+                    <label for="skills">Skills (comma-separated):</label>
+                    <input type="text" id="skills" placeholder="Microsoft Word, Microsoft Excel, Microsoft Powerpoint, Project Management, Hubspot, Smartsheet, Email marketing, Asana, Java" required>
+                    <div class="error" id="skills-error"></div>
+                </div>
+
+                <div class="step-nav">
+                    <button type="button" id="prevBtn" disabled>Previous</button>
+                    <button type="button" id="nextBtn">Next</button>
+                </div>
+            </form>
+
+            <button id="downloadBtn">Download Resume as PDF</button>
+        </div>
+        <div class="preview-pane">
+            <div id="preview">
+                <!-- Preview content will be inserted here -->
+            </div>
+        </div>
+    </div>
+    <div id="resumePopup" class="modal">
+        <div class="modal-content">
+            <div class="resume-preview">
+                <h1 id="preview-name"></h1>
+                <div id="preview-contact" class="contact-info"></div>
+                
+                <div class="section">
+                    <h2>EDUCATION</h2>
+                    <div><span id="preview-degree" class="degree"></span> <span id="preview-grad-date" class="date"></span></div>
+                    <div><span id="preview-university" class="university"></span></div>
+                    <div id="preview-edu-details"></div>
+                </div>
+                
+                <div class="section">
+                    <h2>WORK EXPERIENCE</h2>
+                    <div><span id="preview-job-title" class="job-title"></span> <span id="preview-job-date" class="date"></span></div>
+                    <div><span id="preview-company" class="company"></span></div>
+                    <ul id="preview-job-details"></ul>
+                </div>
+                
+                <div class="section">
+                    <h2>CERTIFICATIONS</h2>
+                    <ul id="preview-certifications"></ul>
+                </div>
+                
+                <div class="section">
+                    <h2>TECHNICAL SKILLS</h2>
+                    <div id="preview-skills" class="skills-grid"></div>
+                </div>
+            </div>
+            <div class="button-container">
+                <button id="downloadPopupBtn">Download Resume</button>
+                <button id="keepEditingBtn">Keep Editing</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="downloadConfirmation" class="modal">
+        <div class="modal-content">
+            <div class="confirmation-message">
+                <h2>Resume Downloaded Successfully!</h2>
+                <p>Your resume has been saved to your device.</p>
+            </div>
+            <div class="button-container">
+                <button id="backToHomeBtn">Back to Home</button>
+                <button id="continueEditingBtn">Continue Editing</button>
+            </div>
+        </div>
+    </div>
+    <script>
+        let currentStep = 1;
+        const totalSteps = 5;
+        showStep(1);
+        function showStep(step) {
+            document.querySelectorAll('.step').forEach(el => el.classList.remove('active'));
+            document.getElementById(`step${step}`).classList.add('active');
+            
+            document.getElementById('prevBtn').disabled = (step === 1);
+            document.getElementById('nextBtn').innerText = (step === totalSteps) ? 'Finish' : 'Next';
+        }
+
+        function validateStep(step) {
+            const inputs = document.querySelectorAll(`#step${step} input[required]`);
+            let isValid = true;
+            inputs.forEach(input => {
+                if (!input.value.trim()) {
+                    isValid = false;
+                    document.getElementById(`${input.id}-error`).textContent = 'This field is required.';
+                } else {
+                    document.getElementById(`${input.id}-error`).textContent = '';
+                }
+            });
+            return isValid;
+        }
+
+        document.getElementById('prevBtn').addEventListener('click', () => {
+            if (currentStep > 1) {
+                currentStep--;
+                showStep(currentStep);
+            }
+        });
+        function showResumePopup() {
+            // Personal Information
+            document.getElementById('preview-name').textContent = document.getElementById('name').value;
+            document.getElementById('preview-contact').textContent = document.getElementById('contact').value;
+        
+            // Education
+            document.getElementById('preview-degree').textContent = document.getElementById('degree').value;
+            document.getElementById('preview-grad-date').textContent = document.getElementById('grad-date').value;
+            document.getElementById('preview-university').textContent = document.getElementById('university').value;
+            document.getElementById('preview-edu-details').textContent = document.getElementById('edu-details').value;
+        
+            // Work Experience
+            document.getElementById('preview-job-title').textContent = document.getElementById('job-title').value;
+            document.getElementById('preview-job-date').textContent = document.getElementById('job-date').value;
+            document.getElementById('preview-company').textContent = document.getElementById('company').value;
+        
+            // Job details
+            const jobDetails = document.getElementById('job-details').value.split('\n');
+            const jobDetailsList = document.getElementById('preview-job-details');
+            jobDetailsList.innerHTML = '';
+            jobDetails.forEach(detail => {
+                if (detail.trim() !== '') {
+                    const li = document.createElement('li');
+                    li.textContent = detail.trim();
+                    jobDetailsList.appendChild(li);
+                }
+            });
+        
+            // Certifications
+            const certifications = document.getElementById('certifications').value.split('\n');
+            const certList = document.getElementById('preview-certifications');
+            certList.innerHTML = '';
+            certifications.forEach(cert => {
+                if (cert.trim() !== '') {
+                    const li = document.createElement('li');
+                    li.textContent = cert.trim();
+                    certList.appendChild(li);
+                }
+            });
+        
+            // Skills
+            const skills = document.getElementById('skills').value.split(',');
+            const skillsGrid = document.getElementById('preview-skills');
+            skillsGrid.innerHTML = '';
+            skills.forEach(skill => {
+                if (skill.trim() !== '') {
+                    const div = document.createElement('div');
+                    div.textContent = skill.trim();
+                    skillsGrid.appendChild(div);
+                }
+            });
+        
+            // Show the popup
+            document.getElementById('resumePopup').style.display = 'block';
+        }
+        // Helper function to safely get values from input fields
+        function getValue(id) {
+            const element = document.getElementById(id);
+            return element ? element.value.trim() : '';
+        }
+        
+       
+        
+        document.getElementById('keepEditingBtn').addEventListener('click', function() {
+            document.getElementById('resumePopup').style.display = 'none';
+        });
+        
+        document.getElementById('nextBtn').addEventListener('click', () => {
+            if (currentStep === totalSteps && validateStep(currentStep)) {
+                showResumePopup();
+            } else if (currentStep < totalSteps) {
+                if (validateStep(currentStep)) {
+                    currentStep++;
+                    showStep(currentStep);
+                }
+            }
+        });
+        document.getElementById('downloadPopupBtn').addEventListener('click', function() {
+            // Trigger the download functionality here
+            downloadResume();
+            showDownloadConfirmation();
+        });
+        
+        document.getElementById('keepEditingBtn').addEventListener('click', function() {
+            document.getElementById('resumePopup').style.display = 'none';
+        });
+        function showDownloadConfirmation() {
+         document.getElementById('resumePopup').style.display = 'none';
+          document.getElementById('downloadConfirmation').style.display = 'block';
+         }
+
+           document.getElementById('backToHomeBtn').addEventListener('click', function() {
+             window.location.href =  '{% url "home" %}'; // Update this URL to your actual home page URL
+           });
+ 
+        document.getElementById('continueEditingBtn').addEventListener('click', function() {
+        document.getElementById('downloadConfirmation').style.display = 'none';
+           showStep(totalSteps);
+        });
+
+
+
+          window.onclick = function(event) {
+            if (event.target == document.getElementById('resumePopup')) {
+             document.getElementById('resumePopup').style.display = 'none';
+              }
+              if (event.target == document.getElementById('downloadConfirmation')) {
+              document.getElementById('downloadConfirmation').style.display = 'none';
+                }
+            }
+
+        
+ function updatePreview() {
+            const preview = document.getElementById('preview');
+            preview.innerHTML = `
+                <h1>${getValue('name', 'FIRST NAME LAST NAME')}</h1>
+                <div class="contact-info">${getValue('contact', '(XXX) XXX-XXXX | ProfessionalEmail@gmail.com | linkedin.com/in | City, State')}</div>
+                
+                <div class="section">
+                    <h2>EDUCATION</h2>
+                    <div><span class="degree">${getValue('degree', 'Degree, Major (e.g Bachelor of Science, Communication Studies)')}</span> <span class="date">${getValue('grad-date', 'Graduating Month Year')}</span></div>
+                    <div><span class="university">${getValue('university', 'Name of University, Institution, City, State')}</span></div>
+                    <div>${getValue('edu-details', 'Minor: XXXXX | GPA: x.x/4.0')}</div>
+                </div>
+                
+                <div class="section">
+                    <h2>WORK EXPERIENCE</h2>
+                    <div><span class="job-title">${getValue('job-title', 'Position Title')}</span> <span class="date">${getValue('job-date', 'Month Year - Month Year')}</span></div>
+                    <div><span class="company">${getValue('company', 'Organization/Company Name, City, State')}</span></div>
+                    <ul>
+                        ${getValueAsList('job-details', ' Write your main highlighted accomplishments.\n Think about how your task/project helped the company do better and how you added value to the company.\n Follow the format "Performed X by doing Y resulting in Z", quantify with numbers, percentages, other data where you can\n Start with strong action verbs and avoid using responsible, helped, researched or assisted (review our Guide to Using Action Verbs).')}
+                    </ul>
+                </div>
+                
+                <div class="section">
+                    <h2>CERTIFICATIONS</h2>
+                    <ul>
+                        ${getValueAsList('certifications', ' Name of certification, Issuing Company or Organization time period for certification (e.g. expiration) or when issued\n E.g.: CPR Certification, American Red Cross Expires Month Year\n Google UX Design Certificate, Coursera Issued Month Year')}
+                    </ul>
+                </div>
+                
+                <div class="section">
+                    <h2>TECHNICAL SKILLS</h2>
+                    <div class="skills-grid">
+                        ${getValueAsGrid('skills', 'Microsoft Word, Microsoft Excel, Microsoft Powerpoint, Project Management, Hubspot, Smartsheet, Email marketing, Asana, Java')}
+                    </div>
+                </div>
+            `;
+        }
+
+        function getValue(id, placeholder) {
+            const value = document.getElementById(id).value.trim();
+            return value ? value : `<span class="placeholder">${placeholder}</span>`;
+        }
+
+        function getValueAsList(id, placeholder) {
+            const value = document.getElementById(id).value.trim();
+            if (value) {
+                return value.split('\n').map(detail => `<li>${detail.trim()}</li>`).join('');
+            } else {
+                return placeholder.split('\n').map(detail => `<li class="placeholder">${detail.trim()}</li>`).join('');
+            }
+        }
+
+        function getValueAsGrid(id, placeholder) {
+            const value = document.getElementById(id).value.trim();
+            if (value) {
+                return value.split(',').map(skill => `<div>${skill.trim()}</div>`).join('');
+            } else {
+                return placeholder.split(',').map(skill => `<div class="placeholder">${skill.trim()}</div>`).join('');
+            }
+        }
+
+        // Add event listeners to all input and textarea elements
+        document.querySelectorAll('input, textarea').forEach(element => {
+            element.addEventListener('input', updatePreview);
+        });
+
+        // Initial update
+        updatePreview();
+
+        // Download functionality
+        function downloadResume() {
+            const { jsPDF } = window.jspdf;
+        
+            const pdf = new jsPDF();
+            const pageWidth = pdf.internal.pageSize.getWidth();
+            const pageHeight = pdf.internal.pageSize.getHeight();
+            const margin = 15;
+            let yPosition = margin;
+        
+            // Helper function to add text with word wrap
+            function addWrappedText(text, x, y, maxWidth, lineHeight) {
+                const lines = pdf.splitTextToSize(text, maxWidth);
+                for (let i = 0; i < lines.length; i++) {
+                    pdf.text(lines[i], x, y);
+                    y += lineHeight;
+                }
+                return y;
+            }
+        
+            // Set font styles
+            pdf.setFont("helvetica");
+            pdf.setFontSize(16);
+        
+            // Name
+            const name = document.getElementById('preview-name').textContent;
+            pdf.setTextColor(0, 0, 0); // Set text color to black
+            pdf.text(name, pageWidth / 2, yPosition, { align: "center" });
+            yPosition += 10;
+        
+            // Contact info
+            pdf.setFontSize(10);
+            const contact = document.getElementById('preview-contact').textContent;
+            pdf.setTextColor(0, 0, 0); // Set text color to black
+            pdf.text(contact, pageWidth / 2, yPosition, { align: "center" });
+            yPosition += 15;
+        
+            // Sections with different colors for each heading
+            const sections = [
+            { title: "EDUCATION", color: [233, 69, 96] }, // #e94560
+            { title: "WORK EXPERIENCE", color: [233, 69, 96] }, // #e94560
+            { title: "CERTIFICATIONS", color: [233, 69, 96] }, // #e94560
+            { title: "TECHNICAL SKILLS", color: [233, 69, 96] } // #e94560
+            ];
+        
+            sections.forEach(section => {
+                pdf.setFontSize(12);
+                pdf.setFont("helvetica", "bold");
+                pdf.setTextColor(...section.color); // Set text color to section-specific color
+                pdf.text(section.title, margin, yPosition);
+                pdf.line(margin, yPosition + 1, pageWidth - margin, yPosition + 1);
+                yPosition += 8;
+        
+                pdf.setFontSize(10);
+                pdf.setFont("helvetica", "normal");
+                pdf.setTextColor(0, 0, 0); // Reset text color to black for section content
+        
+                switch (section.title) {
+                    case "EDUCATION":
+                        const degree = document.getElementById('preview-degree').textContent;
+                        const gradDate = document.getElementById('preview-grad-date').textContent;
+                        pdf.text(`${degree}`, margin, yPosition);
+                        pdf.text(gradDate, pageWidth - margin, yPosition, { align: "right" });
+                        yPosition += 5;
+                        const university = document.getElementById('preview-university').textContent;
+                        yPosition = addWrappedText(university, margin, yPosition, pageWidth - 2 * margin, 5);
+                        yPosition += 5;
+                        const eduDetails = document.getElementById('preview-edu-details').textContent;
+                        yPosition = addWrappedText(eduDetails, margin, yPosition, pageWidth - 2 * margin, 5);
+                        yPosition += 10;
+                        break;
+                    case "WORK EXPERIENCE":
+                        const jobTitle = document.getElementById('preview-job-title').textContent;
+                        const jobDate = document.getElementById('preview-job-date').textContent;
+                        pdf.text(jobTitle, margin, yPosition);
+                        pdf.text(jobDate, pageWidth - margin, yPosition, { align: "right" });
+                        yPosition += 5;
+                        const company = document.getElementById('preview-company').textContent;
+                        yPosition = addWrappedText(company, margin, yPosition, pageWidth - 2 * margin, 5);
+                        yPosition += 5;
+                        const jobDetails = document.getElementById('preview-job-details').getElementsByTagName('li');
+                        Array.from(jobDetails).forEach(detail => {
+                            pdf.text('•', margin, yPosition);
+                            yPosition = addWrappedText(detail.textContent, margin + 5, yPosition, pageWidth - 2 * margin - 5, 5);
+                            yPosition += 2;
+                        });
+                        yPosition += 10;
+                        break;
+                    case "CERTIFICATIONS":
+                        const certifications = document.getElementById('preview-certifications').getElementsByTagName('li');
+                        Array.from(certifications).forEach(cert => {
+                            pdf.text('•', margin, yPosition);
+                            yPosition = addWrappedText(cert.textContent, margin + 5, yPosition, pageWidth - 2 * margin - 5, 5);
+                            yPosition += 2;
+                        });
+                        yPosition += 10;
+                        break;
+                    case "TECHNICAL SKILLS":
+                        const skills = document.getElementById('preview-skills').children;
+                        let skillX = margin;
+                        let maxY = yPosition;
+                        Array.from(skills).forEach((skill, index) => {
+                            pdf.text('•', skillX, yPosition);
+                            const newY = addWrappedText(skill.textContent, skillX + 5, yPosition, (pageWidth - 2 * margin) / 3 - 10, 5);
+                            maxY = Math.max(maxY, newY);
+                            if ((index + 1) % 3 === 0) {
+                                yPosition = maxY + 5;
+                                skillX = margin;
+                            } else {
+                                skillX += (pageWidth - 2 * margin) / 3;
+                            }
+                        });
+                        yPosition = maxY + 10;
+                        break;
+                }
+        
+                yPosition += 5;
+            });
+        
+            pdf.save('professional_resume.pdf');
+        }
+        
+       
+
+        function enhance() {
+            const enhanceBtn = document.getElementById('enhance');
+            const jobDetails = document.getElementById('job-details');
+
+            enhanceBtn.textContent = 'Enhancing...';
+            enhanceBtn.disabled = true;
+
+            const csrftoken = getCookie('csrftoken');
+
+            fetch('/enhance-text/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                    'X-CSRFToken': csrftoken
+                },
+                body: `text=${encodeURIComponent(jobDetails.value)}`
+            })
+            .then(response => response.json())
+            .then(data => {
+                jobDetails.value = data.enhanced_text;
+                updatePreview();
+                enhanceBtn.textContent = 'Enhance';
+                enhanceBtn.disabled = false;
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                enhanceBtn.textContent = 'Enhance';
+                enhanceBtn.disabled = false;
+                alert('An error occurred while enhancing the text. Please try again.');
+            });
+        }
+
+        document.getElementById('enhance').addEventListener('click', enhance);
+        
+        // Function to get CSRF token
+        function getCookie(name) {
+            let cookieValue = null;
+            if (document.cookie && document.cookie !== '') {
+                const cookies = document.cookie.split(';');
+                for (let i = 0; i < cookies.length; i++) {
+                    const cookie = cookies[i].trim();
+                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                        break;
+                    }
+                }
+            }
+            return cookieValue;
+        }
+    
+        
+        
+    </script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+</body>
+</html>

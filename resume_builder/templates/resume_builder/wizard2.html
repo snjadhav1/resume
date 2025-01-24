@@ -1,0 +1,620 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OptiCV - ATS-Friendly Resume Builderr</title>
+    <style>
+       body {
+    font-family: Arial, sans-serif;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    height: 100vh;
+    background-color: #1e2a3a;
+    color: #fff;
+}
+
+#form-container {
+    width: 40%;
+    padding: 40px;
+    overflow-y: auto;
+    background-color: #1e2a3a;
+}
+
+#resume-container {
+    width: 60%;
+    padding: 40px;
+    overflow-y: auto;
+    background-color: #2c3e50;
+}
+
+.form-section {
+    margin-bottom: 30px;
+    display: none;
+}
+
+.form-section.active {
+    display: block;
+}
+
+.form-section h1 {
+    color: #ff6b6b;
+    font-size: 28px;
+    margin-bottom: 20px;
+}
+
+.form-section h2 {
+    color: #ff6b6b;
+    font-size: 22px;
+    margin-bottom: 15px;
+}
+
+label {
+    display: block;
+    margin-bottom: 5px;
+    color: #bdc3c7;
+}
+
+input, textarea {
+    width: 100%;
+    padding: 12px;
+    margin-bottom: 20px;
+    border: 1px solid #3a4b5c;
+    border-radius: 4px;
+    background-color: #2c3e50;
+    color: #fff;
+    font-size: 16px;
+}
+
+input::placeholder, textarea::placeholder {
+    color: #6c7a89;
+}
+
+.navigation-buttons {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 30px;
+}
+
+button {
+    background-color: #3498db;
+    color: white;
+    padding: 12px 20px;
+    border: none;
+    cursor: pointer;
+    border-radius: 4px;
+    font-size: 16px;
+}
+
+button:hover {
+    background-color: #2980b9;
+}
+
+#previous-button {
+    background-color: #34495e;
+}
+
+#previous-button:hover {
+    background-color: #2c3e50;
+}
+
+/* Resume Preview Styles */
+#resume {
+    background-color: white;
+    color: #333;
+    padding: 40px;
+    box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    font-family: Arial, sans-serif;
+    max-width: 800px;
+    margin: 0 auto;
+}
+
+#resume-header {
+    background-color: #FF7F7F;
+    color: white;
+    padding: 20px;
+    text-align: center;
+}
+
+#resume-name {
+    margin: 0;
+    font-size: 36px;
+    font-weight: normal;
+}
+
+#resume-title {
+    font-size: 18px;
+    margin-top: 5px;
+    font-style: italic;
+}
+
+#resume-content {
+    display: flex;
+    padding: 20px;
+}
+
+.left-column {
+    width: 30%;
+    padding-right: 50px;
+}
+
+.right-column {
+    width: 70%;
+    padding-left: 20px;
+}
+
+#resume h2 {
+    font-size: 18px;
+    margin-top: 20px;
+    margin-bottom: 10px;
+    color: #333;
+    text-transform: uppercase;
+}
+
+#resume p {
+    margin: 5px 0;
+    font-size: 14px;
+}
+
+.job-title, .project-name {
+    font-weight: bold;
+}
+
+.job-company, .project-role {
+    font-style: italic;
+}
+
+.job-description, .project-description {
+    margin-left: 20px;
+}
+
+#resume-linkedin {
+    color: #0077B5;
+}
+
+.enhance-button {
+    background-color: #007bff;
+    color: white;
+    padding: 5px 10px;
+    border: none;
+    cursor: pointer;
+    margin-left: 10px;
+    border-radius: 4px;
+}
+
+.enhance-button:hover {
+    background-color: #0056b3;
+}
+.invalid {
+    border: 2px solid red;
+}
+.placeholder {
+    color: #888; /* Light grey to mimic placeholder style */
+}
+.popup {
+    display: none;
+    position: fixed;
+    z-index: 1;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    overflow: auto;
+    background-color: rgba(0,0,0,0.4);
+}
+
+.popup-content {
+    background-color: #fefefe;
+    margin: 5% auto;
+    padding: 20px;
+    border: 1px solid #888;
+    width: 80%;
+    max-width: 800px;
+}
+
+#downloadConfirmation h2 {
+    color: #4CAF50; /* Green color for success message */
+    margin-bottom: 15px;
+}
+
+#downloadConfirmation p {
+    margin-bottom: 20px;
+}
+
+
+#preview-skills {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+    gap: 10px;
+}
+
+#preview-skills div {
+    background-color: #f0f0f0;
+    padding: 5px 10px;
+    border-radius: 5px;
+    text-align: center;
+}
+    </style>
+</head>
+<body>
+    <div id="form-container">
+        <div class="form-section active" id="personal-info">
+            <h2>Personal Information</h2>
+            <input type="text" id="name" placeholder="Full Name">
+            <input type="text" id="title" placeholder="Title">
+            <input type="email" id="email" placeholder="Email">
+            <input type="tel" id="phone" placeholder="Phone">
+            <input type="text" id="location" placeholder="Location">
+            <input type="text" id="linkedin" placeholder="LinkedIn">
+            <button onclick="nextSection('education')">Next</button>
+        </div>
+        
+        <div class="form-section" id="education">
+            <h2>Education</h2>
+            <input type="text" id="degree" placeholder="Degree">
+            <input type="text" id="major" placeholder="Major">
+            <input type="text" id="university" placeholder="University">
+            <input type="text" id="edu-year" placeholder="Year">
+            <input type="text" id="edu-location" placeholder="Location">
+            <button onclick="prevSection('education','personal-info')">Previous</button>
+            <button onclick="nextSection('skills')">Next</button>
+        </div>
+        
+        <div class="form-section" id="skills">
+            <h2>Skills</h2>
+            <textarea id="skills" rows="5" placeholder="Enter skills, one per line"></textarea>
+            <button onclick="prevSection('skills','education')">Previous</button>
+            <button onclick="nextSection('objective')">Next</button>
+        </div>
+        
+        <div class="form-section" id="objective">
+            <h2>Career Objective</h2>
+            <textarea id="objective" rows="4" placeholder="Enter your career objective"></textarea>
+            <button id="enhance-objective" class="enhance-button" onclick="enhanceText('objective')">Enhance with AI</button>
+            <button onclick="prevSection('objective','skills')">Previous</button>
+            <button onclick="nextSection('experience')">Next</button>
+        </div>
+        
+        <div class="form-section" id="experience">
+            <h2>Work Experience</h2>
+            <input type="text" id="job-title" placeholder="Job Title">
+            <input type="text" id="company" placeholder="Company">
+            <input type="text" id="job-date" placeholder="Date">
+            <input type="text" id="job-location" placeholder="Location">
+            <textarea id="job-description" rows="4" placeholder="Job Description (use • for bullet points)"></textarea>
+            <button id="enhance-job" class="enhance-button" onclick="enhanceText('job-description')">Enhance with AI</button>
+            <button onclick="prevSection('experience','objective')">Previous</button>
+            <button onclick="nextSection('projects')">Next</button>
+        </div>
+        
+        <div class="form-section" id="projects">
+            <h2>Projects</h2>
+            <input type="text" id="project-name" placeholder="Project Name">
+            <input type="text" id="project-role" placeholder="Your Role">
+            <input type="text" id="project-date" placeholder="Date">
+            <textarea id="project-description" rows="4" placeholder="Project Description (use • for bullet points)"></textarea>
+            <button id="enhance-project" class="enhance-button" onclick="enhanceText('project-description')">Enhance with AI</button>
+            <button onclick="prevSection('projects','experience')">Previous</button>
+            <button id="previewButton">Preview Resume</button>
+        </div>
+    </div>
+    
+    <div id="resume-container">
+        <div id="resume">
+            <div id="resume-header">
+                <h1 id="resume-name" class="placeholder">TINA COOK</h1>
+                <p id="resume-title" class="placeholder">SOFTWARE ENGINEER INTERN</p>
+            </div>
+            <div id="resume-content">
+                <div class="left-column">
+                    <h2>CONTACT</h2>
+                    <p id="resume-email"class="placeholder">t.cook@email.com</p>
+                    <p id="resume-phone"class="placeholder">(123) 456-7890</p>
+                    <p id="resume-location"class="placeholder">Seattle, WA</p>
+                    <p id="resume-linkedin"class="placeholder">LinkedIn</p>
+                    
+                    <h2>EDUCATION</h2>
+                    <p id="resume-degree"class="placeholder">Bachelor of Science</p>
+                    <p id="resume-major"class="placeholder">Computer Science</p>
+                    <p id="resume-university"class="placeholder">University of Washington</p>
+                    <p id="resume-edu-year"class="placeholder">2021 - current</p>
+                    <p id="resume-edu-location"class="placeholder">Seattle, WA</p>
+                    
+                    <h2>SKILLS</h2>
+                    <p id="resume-skills"class="placeholder">C++<br>Mercurial<br>Eclipse<br>MongoDB<br>OpenShift</p>
+                </div>
+                
+                <div class="right-column">
+                    <h2>CAREER OBJECTIVE</h2>
+                    <p id="resume-objective"class="placeholder">Passionate software engineer intern with project experience designing a mobile application design and POS-based smart contract development, aspiring to bring my expertise to Tableau Software. Excited to apply my skills in your firm to drive innovative data visualization solutions.</p>
+                    
+                    <h2>WORK EXPERIENCE</h2>
+                    <p class="job-title placeholder" id="resume-job-title">Customer Service Representative</p>
+                    <p class="job-company placeholder" id="resume-company">T-Mobile</p>
+                    <p><span id="resume-job-date"class="placeholder">2023 - current</span> / <span id="resume-job-location"class="placeholder">Seattle, WA</span></p>
+                    <div id="resume-job-description" class="placeholder">
+                        • Provided on-call support to a minimum of 71 customers daily, resolving 92% of issues on the first call.<br>
+
+                        • Prevented escalations for 8 billing issues each month via quick resolutions.<br>
+                    </div>
+                    
+                    <h2>PROJECTS</h2>
+                    <p class="project-name placeholder" id="resume-project-name" >PixelPilot</p>
+                    <p class="project-role placeholder" id="resume-project-role" >UI/UX Designer</p>
+                    <p id="resume-project-date"class="placeholder">2022 - 2023</p>
+                    <div id="resume-project-description" class="placeholder">
+                        • Designed and prototyped a mobile app interface for a drone control application, gaining a 87% user engagement rate during the testing phase.<br>
+                        • Held multiple user testing sessions, gathering feedback to refine the app's user interface and decrease post-launch bug reports by 41%.<br>
+                      
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div id="resumePopup" class="popup">
+        <div class="popup-content">
+            <h2>Resume Preview</h2>
+            <div id="resumePreview">
+             
+            </div>
+            <button id="downloadPopupBtn">Download Resume</button>
+            <button id="keepEditingBtn">Keep Editing</button>
+        </div>
+    </div>
+
+    <!-- Download Confirmation Popup -->
+    <div id="downloadConfirmation" class="popup">
+        <div class="popup-content">
+            <h2>Resume Downloaded Successfully!</h2>
+            <p>Your resume has been saved to your device.</p>
+            <button id="backToHomeBtn">Back to Home</button>
+            <button id="continueEditingBtn">Continue Editing</button>
+        </div>
+    </div>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <script>
+
+// Function to validate form fields with specific messages
+function validateSection(sectionId) {
+    const section = document.getElementById(sectionId);
+    const inputs = section.querySelectorAll('input, textarea');
+    let isValid = true;
+    let errorMessages = [];
+
+    inputs.forEach(input => {
+        if (input.value.trim() === '') {
+            isValid = false;
+            input.classList.add('invalid');
+            let fieldName = input.placeholder || input.id;
+            errorMessages.push(`Please fill in the "${fieldName}" field.`);
+        } else {
+            input.classList.remove('invalid');
+        }
+    });
+
+    return { isValid, errorMessages };
+}
+
+// Modified nextSection function with immediate validation
+function nextSection(currentSectionId, nextSectionId) {
+    const { isValid, errorMessages } = validateSection(currentSectionId);
+    
+    if (isValid) {
+        document.getElementById(currentSectionId).classList.remove('active');
+        document.getElementById(nextSectionId).classList.add('active');
+    } else {
+        alert(errorMessages.join('\n'));
+    }
+}
+// Function to navigate to the previous section
+function prevSection(currentSectionId, previousSectionId) {
+    document.getElementById(currentSectionId).classList.remove('active');
+    document.getElementById(previousSectionId).classList.add('active');
+}
+
+
+function updateResume(id, value) {
+    const element = document.getElementById('resume-' + id);
+    if (element) {
+        if (value.trim() === "") {
+            element.classList.add('placeholder');
+        } else {
+            element.classList.remove('placeholder');
+            if (id === 'skills') {
+                element.innerHTML = value.split(',').map(skill => `<div>${skill.trim()}</div>`).join('');
+            } else if (id === 'job-description' || id === 'project-description') {
+                element.innerHTML = value.split('\n').map(line => `<p>${line.trim()}</p>`).join('');
+            } else {
+                element.textContent = value;
+            }
+        }
+    }
+}
+// Function to get the placeholder text for each field
+function showResumePopup() {
+    // Clone the entire resume container
+    const resumeContainer = document.getElementById('resume').cloneNode(true);
+    
+    // Get all the styles
+    const styles = Array.from(document.styleSheets)
+        .map(styleSheet => {
+            try {
+                return Array.from(styleSheet.cssRules)
+                    .map(rule => rule.cssText)
+                    .join('\n');
+            } catch (e) {
+                console.log('Error accessing styleSheet', e);
+                return '';
+            }
+        })
+        .join('\n');
+
+    // Create a new style element with all the styles
+    const styleElement = document.createElement('style');
+    styleElement.textContent = styles;
+
+    // Clear the previous content of the popup
+    const popupContent = document.getElementById('resumePreview');
+    popupContent.innerHTML = '';
+
+    // Append the style element and the cloned resume to the popup
+    popupContent.appendChild(styleElement);
+    popupContent.appendChild(resumeContainer);
+
+    // Display the popup
+    document.getElementById('resumePopup').style.display = 'block';
+}
+
+// Helper function to safely get values from input fields
+function getValue(id) {
+    const element = document.getElementById(id);
+    return element ? element.value.trim() : '';
+}
+// Function to download resume
+function downloadResume() {
+    const element = document.getElementById('resumePreview');
+    const opt = {
+        margin: 10,
+        filename: 'resume.pdf',
+        image: { type: 'jpeg', quality: 0.98 },
+        html2canvas: { scale: 2 },
+        jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+    };
+
+    html2pdf().from(element).set(opt).save();
+}
+
+// Function to show download confirmation
+function showDownloadConfirmation() {
+    document.getElementById('resumePopup').style.display = 'none';
+    document.getElementById('downloadConfirmation').style.display = 'block';
+}
+
+// Function to enhance text
+function enhanceText(id) {
+    const enhanceButton = document.getElementById('enhance-' + id.split('-')[0]);
+    const text = document.getElementById(id).value;
+
+    enhanceButton.textContent = 'Enhancing...';
+    enhanceButton.disabled = true;
+
+    fetch('/enhance-text/', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+            'X-CSRFToken': getCookie('csrftoken')
+        },
+        body: `text=${encodeURIComponent(text)}`
+    })
+    .then(response => {
+        if (!response.ok) {
+            throw new Error('Network response was not ok');
+        }
+        return response.json();
+    })
+    .then(data => {
+        document.getElementById(id).value = data.enhanced_text;
+        updateResume(id, data.enhanced_text);
+    })
+    .catch(error => {
+        console.error('Error:', error);
+    })
+    .finally(() => {
+        enhanceButton.textContent = 'Enhance with AI';
+        enhanceButton.disabled = false;
+    });
+}
+
+// Function to get CSRF token
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+
+// Event listeners
+document.addEventListener('DOMContentLoaded', function() {
+    document.querySelectorAll('input, textarea').forEach(input => {
+        updateResume(input.id, input.value);
+    });
+    // Add input event listeners to update resume and remove 'invalid' class
+    document.querySelectorAll('input, textarea').forEach(input => {
+        input.addEventListener('input', (e) => {
+            updateResume(e.target.id, e.target.value);
+            e.target.classList.remove('invalid');
+        });
+    });
+   
+    // Add click event listeners for all next buttons
+    document.querySelectorAll('button[onclick^="nextSection"]').forEach(button => {
+        const originalOnClick = button.getAttribute('onclick');
+        const match = originalOnClick.match(/nextSection\('(\w+)'\)/);
+        if (match) {
+            const nextSectionId = match[1];
+            button.onclick = function(e) {
+                e.preventDefault(); // Prevent default action
+                const currentSection = this.closest('.form-section');
+                nextSection(currentSection.id, nextSectionId);
+            };
+        }
+    });
+
+
+  // Add click event listeners for all previous buttons
+document.querySelectorAll('button[onclick^="prevSection"]').forEach(button => {
+    const originalOnClick = button.getAttribute('onclick');
+    const match = originalOnClick.match(/previousSection\('(\w+)',\s*'(\w+)'\)/);
+    if (match) {
+        const currentSectionId = match[1];
+        const previousSectionId = match[2];
+        button.onclick = function(e) {
+            e.preventDefault(); // Prevent default action
+            previousSection(currentSectionId, previousSectionId);
+        };
+    }
+});
+
+document.getElementById('previewButton').addEventListener('click', function() {
+    showResumePopup();
+});
+    // Other button event listeners
+    document.getElementById('keepEditingBtn').addEventListener('click', function() {
+        document.getElementById('resumePopup').style.display = 'none';
+    });
+
+    document.getElementById('downloadPopupBtn').addEventListener('click', function() {
+        downloadResume();
+        showDownloadConfirmation();
+    });
+
+    document.getElementById('backToHomeBtn').addEventListener('click', function() {
+        window.location.href =  '{% url "home" %}'; // Update this URL to your actual home page URL
+    });
+
+    document.getElementById('continueEditingBtn').addEventListener('click', function() {
+        document.getElementById('downloadConfirmation').style.display = 'none';
+    });
+
+    // Close popups when clicking outside
+    window.onclick = function(event) {
+        if (event.target == document.getElementById('resumePopup')) {
+            document.getElementById('resumePopup').style.display = 'none';
+        }
+        if (event.target == document.getElementById('downloadConfirmation')) {
+            document.getElementById('downloadConfirmation').style.display = 'none';
+        }
+    };
+});
+    </script>
+</body>
+</html>

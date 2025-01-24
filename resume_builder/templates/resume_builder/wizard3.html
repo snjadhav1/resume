@@ -1,0 +1,601 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OptiCV - ATS-Friendly Resume Builder</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.3.2/html2canvas.min.js"></script>
+
+    <style>
+        /* CSS styles will be inserted here */
+        body, html {
+            margin: 0;
+            padding: 0;
+            font-family: Arial, sans-serif;
+            background-color: #1a1a2e;
+        }
+        .container {
+            display: flex;
+            max-width: 100%;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .form-container {
+            width: 40%;
+            padding: 50px;
+            background-color: #f0f8ff;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+            margin-right: 20px;
+            overflow-y: auto;
+            max-height: 90vh;
+        }
+        .preview-container {
+            width: 60%;
+            padding: 20px;
+            background-color: #e0f7fa;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+            overflow-y: auto;
+            max-height: 90vh;
+        }
+        /* ... (rest of the CSS remains the same) ... */
+        .placeholder {
+            color: #888;
+        }
+        #resumePopup {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.4);
+            overflow-y: auto;
+        }
+        .popup-content {
+            background-color: white;
+            margin: 5% auto;
+            padding: 20px;
+            border-radius: 8px;
+            width: 80%;
+            max-width: 800px;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+        .step {
+            display: none;
+        }
+        .step.active {
+            display: block;
+        }
+        input, textarea {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+        button {
+            padding: 10px 20px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-right: 10px;
+            margin-bottom: 10px;
+        }
+        button:disabled {
+            background-color: #ccc;
+        }
+        .error {
+            color: red;
+            font-size: 0.8em;
+            margin-top: -5px;
+            margin-bottom: 10px;
+        }
+        #preview {
+            background-color: white;
+            padding: 20px;
+            border-radius: 8px;
+        }
+    
+       
+        .close {
+            color: #aaa;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        .close:hover {
+            color: #000;
+        }
+        
+        .resume-container {
+            max-width: 900px;
+            margin: 20px auto;
+            background-color: #fff;
+            padding: 0;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+        }
+        .resume-header {
+            background-color: #e0f7fa;
+            text-align: center;
+            padding: 20px 0;
+            border-bottom: 2px solid #007bff;
+        }
+        .resume-header h1 {
+            margin: 0;
+            font-size: 36px;
+        }
+        .resume-header h2 {
+            margin: 5px 0;
+            font-weight: normal;
+            color: #666;
+        }
+        .resume-content {
+            display: flex;
+            padding: 20px;
+        }
+        .left-column {
+            width: 35%;
+            padding-right: 20px;
+            border-right: 2px solid #007bff;
+        }
+        .right-column {
+            width: 65%;
+            padding-left: 20px;
+        }
+        .section {
+            margin-bottom: 20px;
+        }
+        .section-title {
+            font-size: 18px;
+            font-weight: bold;
+            color: #007bff;
+            border-bottom: 1px solid #007bff;
+            padding-bottom: 5px;
+            margin-bottom: 10px;
+        }
+        .line-divider {
+            border-top: 1px solid #ccc;
+            margin: 20px 0;
+        }
+        .contact-info p, .skills ul, .languages ul, .education p, .work-experience p {
+            margin: 5px 0;
+        }
+        .skills ul, .languages ul {
+            list-style-type: none;
+            padding: 0;
+        }
+        .skills ul li, .languages ul li {
+            background: #007bff;
+            color: #fff;
+            display: inline-block;
+            padding: 5px 10px;
+            margin: 3px 0;
+            border-radius: 5px;
+        }
+        .work-experience .job-title {
+            font-weight: bold;
+        }
+        .placeholder {
+            color: #888;}
+            #successMessage {
+                display: none;
+                background-color: #4CAF50;
+                color: white;
+                text-align: center;
+                padding: 10px;
+                margin-top: 10px;
+                border-radius: 4px;
+            }   
+            .mpopup {
+                display: none;
+                position: fixed;
+                z-index: 1000;
+                left: 0;
+                top: 0;
+                width: 100%;
+                height: 100%;
+                background-color: rgba(0,0,0,0.4);
+            }
+    
+            .mpopup-content {
+                background-color: #fefefe;
+                margin: 15% auto;
+                padding: 20px;
+                border: 1px solid #888;
+                width: 80%;
+                max-width: 500px;
+                border-radius: 5px;
+                text-align: center;
+            }
+    
+            .mpopup-content h2 {
+                color: #4CAF50;
+            }
+    
+            .mpopup-content button {
+                margin: 10px;
+                padding: 10px 20px;
+                background-color: #4CAF50;
+                color: white;
+                border: none;
+                border-radius: 4px;
+                cursor: pointer;
+            }
+    
+            .mpopup-content button:hover {
+                background-color: #45a049;
+            }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="form-container">
+            <form id="resumeForm">
+                <div class="step active" id="step1">
+                    <h2>Personal Information</h2>
+                    <input type="text" id="name" placeholder="Full Name" required>
+                    <div class="error" id="name-error"></div>
+                    <input type="text" id="title" placeholder="Professional Title" required>
+                    <div class="error" id="title-error"></div>
+                    <input type="tel" id="phone" placeholder="Phone Number" required>
+                    <div class="error" id="phone-error"></div>
+                    <input type="email" id="email" placeholder="Email Address" required>
+                    <div class="error" id="email-error"></div>
+                    <input type="text" id="location" placeholder="Location" required>
+                    <div class="error" id="location-error"></div>
+                    <input type="text" id="website" placeholder="Website" required>
+                    <div class="error" id="website-error"></div>
+                    <textarea id="summary" placeholder="Profile Summary" rows="4" required></textarea>
+                    <div class="error" id="summary-error"></div>
+                    <button id="enhance-summary" type="button">Enhance with AI</button>
+                </div>
+
+                <div class="step" id="step2">
+                    <h2>Education</h2>
+                    <input type="text" id="degree1" placeholder="Degree" required>
+                    <div class="error" id="degree1-error"></div>
+                    <input type="text" id="university1" placeholder="University" required>
+                    <div class="error" id="university1-error"></div>
+                    <input type="text" id="eduYear1" placeholder="Year" required>
+                    <div class="error" id="eduYear1-error"></div>
+                    <input type="text" id="degree2" placeholder="Degree (Optional)">
+                    <input type="text" id="university2" placeholder="University (Optional)">
+                    <input type="text" id="eduYear2" placeholder="Year (Optional)">
+                </div>
+
+                <div class="step" id="step3">
+                    <h2>Work Experience</h2>
+                    <input type="text" id="jobTitle1" placeholder="Job Title" required>
+                    <div class="error" id="jobTitle1-error"></div>
+                    <input type="text" id="company1" placeholder="Company" required>
+                    <div class="error" id="company1-error"></div>
+                    <input type="text" id="jobYear1" placeholder="Year" required>
+                    <div class="error" id="jobYear1-error"></div>
+                    <textarea id="jobDesc1" placeholder="Job Description" rows="4" required></textarea>
+                    <div class="error" id="jobDesc1-error"></div>
+                    <button id="enhance-jobDesc1" type="button">Enhance with AI</button>
+                    
+                    <input type="text" id="jobTitle2" placeholder="Job Title">
+                    <input type="text" id="company2" placeholder="Company">
+                    <input type="text" id="jobYear2" placeholder="Year">
+                    <textarea id="jobDesc2" placeholder="Job Description" rows="4"></textarea>
+                    <button id="enhance-jobDesc2" type="button">Enhance with AI</button>
+                    
+                </div>
+
+                <div class="step" id="step4">
+                    <h2>Skills</h2>
+                    <input type="text" id="skills" placeholder="Skills (comma-separated)" required>
+                    <div class="error" id="skills-error"></div>
+                </div>
+
+                <div class="step" id="step5">
+                    <h2>Languages</h2>
+                    <input type="text" id="languages" placeholder="Languages (comma-separated)" required>
+                    <div class="error" id="languages-error"></div>
+                </div>
+
+                <div class="step-nav">
+                    <button type="button" id="prevBtn" disabled>Previous</button>
+                    <button type="button" id="nextBtn">Next</button>
+                </div>
+            </form>
+        </div>
+        <div class="preview-container">
+            <div id="preview"></div>
+        </div>
+    </div>
+
+    <div id="resumePopup">
+        <div class="popup-content">
+            <span class="close">&times;</span>
+            <div id="popupPreview"></div>
+            <button id="downloadBtn">Download Resume</button>
+            <button id="keepEditingBtn">Keep Editing</button>
+        </div>
+    </div>
+    <div id="downloadConfirmation" class="mpopup">
+        <div class="mpopup-content">
+            <h2>Resume Downloaded Successfully!</h2>
+            <p>Your resume has been saved to your device.</p>
+            <button id="backToHomeBtn">Back to Home</button>
+            <button id="continueEditingBtn">Continue Editing</button>
+        </div>
+    </div>
+    <script>
+       // Wait for the DOM to be fully loaded
+document.addEventListener('DOMContentLoaded', function() {
+    let currentStep = 1;
+    const totalSteps = 5;
+
+    function showStep(step) {
+        document.querySelectorAll('.step').forEach(el => el.classList.remove('active'));
+        document.getElementById(`step${step}`).classList.add('active');
+        document.getElementById('prevBtn').disabled = (step === 1);
+        document.getElementById('nextBtn').innerText = (step === totalSteps) ? 'Preview Resume' : 'Next';
+    }
+
+    function validateStep(step) {
+        const inputs = document.querySelectorAll(`#step${step} input[required], #step${step} textarea[required]`);
+        let isValid = true;
+        inputs.forEach(input => {
+            if (!input.value.trim()) {
+                isValid = false;
+                document.getElementById(`${input.id}-error`).textContent = 'This field is required.';
+            } else {
+                document.getElementById(`${input.id}-error`).textContent = '';
+            }
+        });
+        return isValid;
+    }
+
+    document.getElementById('prevBtn').addEventListener('click', () => {
+        if (currentStep > 1) {
+            currentStep--;
+            showStep(currentStep);
+        }
+    });
+
+    document.getElementById('nextBtn').addEventListener('click', () => {
+        if (validateStep(currentStep)) {
+            if (currentStep === totalSteps) {
+                showResumePopup();
+            } else {
+                currentStep++;
+                showStep(currentStep);
+            }
+        }
+    });
+
+    function updatePreview() {
+        const preview = document.getElementById('preview');
+        preview.innerHTML = `
+            <div class="resume-container">
+                <div class="resume-header">
+                    <h1>${document.getElementById('name').value || 'Richard Sanchez'}</h1>
+                    <h2>${document.getElementById('title').value || 'Marketing Manager'}</h2>
+                </div>
+                <div class="resume-content">
+                    <div class="left-column">
+                        <div class="section contact-info">
+                            <div class="section-title">Contact</div>
+                            <p>📞 ${document.getElementById('phone').value || '<span class="placeholder">+123-456-7890</span>'}</p>
+                            <p>✉️ ${document.getElementById('email').value || '<span class="placeholder">hello@reallygreatsite.com</span>'}</p>
+                            <p>🏠 ${document.getElementById('location').value || '<span class="placeholder">123 Anywhere St., Any City</span>'}</p>
+                            <p>🌐 ${document.getElementById('website').value || '<span class="placeholder">www.reallygreatsite.com</span>'}</p>
+                        </div>
+                        <div class="line-divider"></div>
+                        <div class="section education">
+                            <div class="section-title">Education</div>
+                            <p>${document.getElementById('degree1').value || '<span class="placeholder">Master of Business Management</span>'}, ${document.getElementById('university1').value || '<span class="placeholder">Borcelle University</span>'}</p>
+                            <p>${document.getElementById('eduYear1').value || '<span class="placeholder">2029 - 2030</span>'}</p>
+                            ${document.getElementById('degree2').value ? `
+                                <p>${document.getElementById('degree2').value}, ${document.getElementById('university2').value}</p>
+                                <p>${document.getElementById('eduYear2').value}</p>
+                            ` : `
+                                <p></p>
+                                <p></p>
+                            `}
+                        </div>
+                        <div class="line-divider"></div>
+                        <div class="section skills">
+                            <div class="section-title">Skills</div>
+                            <ul>
+                                ${(document.getElementById('skills').value || 'Project Management,Public Relations,Teamwork,Time Management,Leadership,Effective Communication,Critical Thinking').split(',').map(skill => `<li>${skill.trim()}</li>`).join('')}
+                            </ul>
+                        </div>
+                        <div class="line-divider"></div>
+                        <div class="section languages">
+                            <div class="section-title">Languages</div>
+                            <ul>
+                                ${(document.getElementById('languages').value || 'English: Fluent,French: Fluent,German: Basics,Spanish: Intermediate').split(',').map(language => `<li>${language.trim()}</li>`).join('')}
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="right-column">
+                        <div class="section profile-summary">
+                            <div class="section-title">Profile Summary</div>
+                            <p>${document.getElementById('summary').value || '<span class="placeholder">Experienced and results-driven Marketing Manager with a proven track record in developing and executing successful marketing strategies. I am seeking a challenging role where I can contribute my skills in strategic planning, team leadership, and creative problem-solving to achieve business objectives.</span>'}</p>
+                        </div>
+                        <div class="line-divider"></div>
+                        <div class="section work-experience">
+                            <div class="section-title">Work Experience</div>
+                            <div class="job">
+                                <p class="job-title">${document.getElementById('jobTitle1').value || '<span class="placeholder">Marketing Manager & Specialist</span>'}, ${document.getElementById('company1').value || '<span class="placeholder">Borcelle Studio</span>'} (${document.getElementById('jobYear1').value || '<span class="placeholder">2030 - Present</span>'})</p>
+                                <p>${document.getElementById('jobDesc1').value || '<span class="placeholder">Led the development and implementation of comprehensive marketing strategies that resulted in a 20% increase in brand visibility and a 15% growth in sales within the first year.</span>'}</p>
+                            </div>
+                            ${document.getElementById('jobTitle2').value ? `
+                                <div class="job">
+                                    <p class="job-title">${document.getElementById('jobTitle2').value}, ${document.getElementById('company2').value} (${document.getElementById('jobYear2').value})</p>
+                                    <p>${document.getElementById('jobDesc2').value}</p>
+                                </div>
+                            ` : `
+                                <div class="job">
+                                    <p class="job-title "></p>
+                                    <p></p>
+                                </div>
+                            `}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+
+    function showResumePopup() {
+        document.getElementById('popupPreview').innerHTML = document.getElementById('preview').innerHTML;
+        document.getElementById('resumePopup').style.display = 'block';
+    }
+
+    document.querySelector('.close').addEventListener('click', () => {
+        document.getElementById('resumePopup').style.display = 'none';
+    });
+
+    document.getElementById('keepEditingBtn').addEventListener('click', () => {
+        document.getElementById('resumePopup').style.display = 'none';
+        // Optionally, you can scroll to the top of the form or focus on a specific input
+        document.querySelector('.form-container').scrollTop = 0;
+    });
+    document.getElementById('downloadBtn').addEventListener('click', () => {
+        const { jsPDF } = window.jspdf;
+        if (!jsPDF) {
+            console.error('jsPDF is not defined. Make sure the library is loaded correctly.');
+            alert('An error occurred while generating the PDF. Please try again later.');
+            return;
+        }
+    
+        // Get the resume container
+        const resumeContainer = document.querySelector('.resume-container');
+    
+        // Use html2canvas to capture the resume as an image
+        html2canvas(resumeContainer, {
+            scale: 2, // Increase scale for better quality
+            useCORS: true, // This might help with loading external resources
+            logging: true, // For debugging
+            onclone: (clonedDoc) => {
+                // If there are any elements you want to hide in the PDF, modify them here
+                // Example: clonedDoc.getElementById('some-element').style.display = 'none';
+            }
+        }).then(canvas => {
+            const imgData = canvas.toDataURL('image/png');
+            
+            // Calculate PDF dimensions based on the canvas
+            const imgWidth = 210; // A4 width in mm
+            const pageHeight = 297; // A4 height in mm
+            const imgHeight = canvas.height * imgWidth / canvas.width;
+            let heightLeft = imgHeight;
+    
+            const pdf = new jsPDF('p', 'mm');
+            let position = 0;
+    
+            // Add image to PDF, creating new pages as necessary
+            pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+            heightLeft -= pageHeight;
+    
+            while (heightLeft >= 0) {
+                position = heightLeft - imgHeight;
+                pdf.addPage();
+                pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+                heightLeft -= pageHeight;
+            }
+    
+            // Save the PDF
+            pdf.save('professional_resume.pdf');
+            document.getElementById('downloadConfirmation').style.display = 'block';
+        }).catch(err => {
+            console.error('Error generating PDF:', err);
+            alert('An error occurred while generating the PDF. Please try again.');
+        });
+    });
+    
+    document.getElementById('backToHomeBtn').addEventListener('click', () => {
+        window.location.href = '{% url "home" %}'; // Replace with your home page URL
+    });
+
+    // Event listener for "Continue Editing" button
+    document.getElementById('continueEditingBtn').addEventListener('click', () => {
+        document.getElementById('downloadConfirmation').style.display = 'none';
+        document.getElementById('resumePopup').style.display = 'none';
+    });
+    
+  
+    
+    window.goHome = function() {
+        window.location.href = '{% url "home" %}'; // Replace with your home page URL
+    };
+    function enhanceText(id) {
+        const enhanceButton = document.getElementById('enhance-' + id.split('-')[0]);
+        const text = document.getElementById(id).value;
+
+        enhanceButton.textContent = 'Enhancing...';
+        enhanceButton.disabled = true;
+
+        fetch('/enhance-text/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+                'X-CSRFToken': getCookie('csrftoken')
+            },
+            body: `text=${encodeURIComponent(text)}`
+        })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Network response was not ok');
+            }
+            return response.json();
+        })
+        .then(data => {
+            document.getElementById(id).value = data.enhanced_text;
+            updatePreview();
+        })
+        .catch(error => {
+            console.error('Error:', error);
+        })
+        .finally(() => {
+            enhanceButton.textContent = 'Enhance with AI';
+            enhanceButton.disabled = false;
+        });
+    }
+
+    // Function to get CSRF token
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+
+    // Add event listeners to all form inputs for live preview updates
+    document.querySelectorAll('input, textarea').forEach(element => {
+        element.addEventListener('input', updatePreview);
+    });
+    document.getElementById('enhance-summary').addEventListener('click', () => enhanceText('summary'));
+    document.getElementById('enhance-jobDesc1').addEventListener('click', () => enhanceText('jobDesc1'));
+    document.getElementById('enhance-jobDesc2').addEventListener('click', () => enhanceText('jobDesc2'));
+
+    // Initial preview update and step display
+    updatePreview();
+    showStep(1);
+});
+    </script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+</body>
+</html>

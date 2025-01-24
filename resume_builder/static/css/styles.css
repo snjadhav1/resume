@@ -1,0 +1,84 @@
+/* static/css/styles.css */
+
+/* Form styles */
+.card {
+    box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    margin-bottom: 20px;
+}
+
+.card-header {
+    background-color: #f8f9fa;
+    border-bottom: 1px solid #dee2e6;
+}
+
+/* Resume preview styles */
+#resumePreview {
+    font-family: 'Arial', sans-serif;
+    font-size: 14px;
+    line-height: 1.4;
+    padding: 15px;
+    max-height: 800px;
+    overflow-y: auto;
+}
+
+#resumePreview h1 {
+    font-size: 20px;
+    margin-bottom: 5px;
+    color: #333;
+}
+
+#resumePreview h2 {
+    font-size: 16px;
+    margin-top: 15px;
+    margin-bottom: 8px;
+color: #1f268780;
+    border-bottom: 1px solid #ddd;
+    padding-bottom: 3px;
+}
+
+#resumePreview h3 {
+    font-size: 14px;
+    margin-bottom: 5px;
+    color: #555;
+}
+
+#previewContact {
+    font-size: 12px;
+    color: #666;
+    margin-bottom: 15px;
+}
+
+#previewSkills ul {
+    list-style-type: disc;
+    padding-left: 20px;
+    margin-bottom: 10px;
+}
+
+#previewSkills li {
+    margin-bottom: 3px;
+}
+
+.job-entry, .project-entry, .cert-entry {
+    margin-bottom: 12px;
+}
+
+.duration {
+    font-style: italic;
+    color: #666;
+    font-size: 12px;
+    margin-bottom: 3px;
+}
+
+/* Enhance button styles */
+.enhance-btn {
+    margin-left: 10px;
+    font-size: 14px;
+    padding: 5px 10px;
+}
+
+/* Make preview scrollable on smaller screens */
+@media (max-height: 800px) {
+    #resumePreview {
+        max-height: 600px;
+    }
+}

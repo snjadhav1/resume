@@ -1,0 +1,387 @@
+{% load static %}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OptiCV - ATS-Friendly Resume Builder</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #1a2a3a;
+            color: #ffffff;
+        }
+
+        canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+        }
+
+        h1 {
+            text-align: center;
+            margin-top: 40px;
+            color: #ffffff;
+            font-size: 3em;
+            font-weight: bold;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            background: linear-gradient(45deg, #ff6b6b, #4ecdc4);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            padding: 10px;
+            border-bottom: 3px solid #ffffff;
+            max-width: 80%;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .template-options {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 30px;
+            padding: 60px;
+            max-width: 1600px;
+            margin: 0 auto;
+        }
+
+        .template-row {
+            display: flex;
+            justify-content: center;
+            width: 100%;
+            gap: 30px;
+            margin-bottom: 30px;
+        }
+
+        .template {
+            background-color: rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            box-shadow: 0 8px 32px rgba(44, 52, 163, 0.37);
+            overflow: hidden;
+            width: calc(50% - 15px);
+            max-width: 700px;
+            transition: all 0.3s ease-in-out;
+            backdrop-filter: blur(4px);
+            -webkit-backdrop-filter: blur(4px);
+            border: 2px solid rgba(255, 255, 255, 0.18);
+            display: flex;
+            flex-direction: column;
+            cursor: pointer;
+            position: relative;
+        }
+
+        .template:hover {
+            transform: translateY(-10px) scale(1.02);
+            box-shadow: 0 12px 40px rgba(31, 38, 135, 0.5);
+        }
+
+        .template-container {
+            position: relative;
+            width: 100%;
+            height: 0;
+            padding-bottom: 141.42%; /* Aspect ratio for A4 paper (1:√2) */
+            overflow: hidden;
+        }
+
+        .template img {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform 0.3s ease-in-out;
+        }
+
+        .template:hover img {
+            transform: scale(1.05);
+        }
+
+        .template p {
+            text-align: center;
+            padding: 15px 0;
+            margin: 0;
+            background-color: rgba(255, 255, 255, 0.1);
+            font-weight: bold;
+            color: #ffffff;
+            transition: background-color 0.3s ease-in-out;
+        }
+
+        .template:hover p {
+            background-color: rgba(255, 255, 255, 0.2);
+        }
+
+        .template-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 255, 0.3);
+            opacity: 0;
+            transition: opacity 0.3s ease-in-out;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .template:hover .template-overlay {
+            opacity: 1;
+        }
+
+        .use-template-btn {
+            padding: 10px 20px;
+            background-color: #2ebe2c;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: background-color 0.3s ease-in-out;
+        }
+
+        .use-template-btn:hover {
+            background-color: #45a049;
+        }
+
+        .template:hover .page-switcher {
+            opacity: 1;
+        }
+
+        .page-switcher.left {
+            left: 10px;
+        }
+
+        .page-switcher.right {
+            right: 10px;
+        }
+
+        @media (max-width: 1200px) {
+            .template-row {
+                flex-direction: column;
+                align-items: center;
+            }
+
+            .template {
+                width: 90%;
+                max-width: 500px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <canvas id="bgCanvas"></canvas>
+    <h1>Select a Resume Template</h1>
+    <div class="template-options">
+        <div class="template-row">
+            <div class="template" data-template-id="1">
+                <a href="{% url 'resume_wizard' template=1 %}">
+                    <div class="template-container">
+                        <img src="{% static 'images/template1.jpg' %}" alt="Template 1">
+                        <div class="template-overlay">
+                            <button class="use-template-btn">Use this template</button>
+                        </div>
+                        <div class="page-switcher left">&lt;</div>
+                        <div class="page-switcher right">&gt;</div>
+                    </div>
+                    <p>Template 1</p>
+                </a>
+            </div>
+            <div class="template" data-template-id="2">
+                <a href="{% url 'resume_wizard' template=2 %}">
+                    <div class="template-container">
+                        <img src="{% static 'images/template2.jpg' %}" alt="Template 2">
+                        <div class="template-overlay">
+                            <button class="use-template-btn">Use this template</button>
+                        </div>
+                        <div class="page-switcher left">&lt;</div>
+                        <div class="page-switcher right">&gt;</div>
+                    </div>
+                    <p>Template 2</p>
+                </a>
+            </div>
+        </div>
+        <div class="template-row">
+            <div class="template" data-template-id="3">
+                <a href="{% url 'resume_wizard' template=3 %}">
+                    <div class="template-container">
+                        <img src="{% static 'images/template3.jpg' %}" alt="Template 3">
+                        <div class="template-overlay">
+                            <button class="use-template-btn">Use this template</button>
+                        </div>
+                        <div class="page-switcher left">&lt;</div>
+                        <div class="page-switcher right">&gt;</div>
+                    </div>
+                    <p>Template 3</p>
+                </a>
+            </div>
+            <div class="template" data-template-id="4">
+                <a href="{% url 'resume_wizard' template=4 %}">
+                    <div class="template-container">
+                        <img src="{% static 'images/template4.jpg' %}" alt="Template 4">
+                        <div class="template-overlay">
+                            <button class="use-template-btn">Use this template</button>
+                        </div>
+                        <div class="page-switcher left">&lt;</div>
+                        <div class="page-switcher right">&gt;</div>
+                    </div>
+                    <p>Template 4</p>
+                </a>
+            </div>
+        </div>
+        <div class="template-row">
+            <div class="template" data-template-id="5">
+                <a href="{% url 'resume_wizard' template=5 %}">
+                    <div class="template-container">
+                        <img src="{% static 'images/template5.jpg' %}" alt="Template 5">
+                        <div class="template-overlay">
+                            <button class="use-template-btn">Use this template</button>
+                        </div>
+                        <div class="page-switcher left">&lt;</div>
+                        <div class="page-switcher right">&gt;</div>
+                    </div>
+                    <p>Template 5</p>
+                </a>
+            </div>
+            <div class="template" data-template-id="6">
+                <a href="{% url 'resume_wizard' template=6 %}">
+                    <div class="template-container">
+                        <img src="{% static 'images/template6.jpg' %}" alt="Template 6">
+                        <div class="template-overlay">
+                            <button class="use-template-btn">Use this template</button>
+                        </div>
+                        <div class="page-switcher left">&lt;</div>
+                        <div class="page-switcher right">&gt;</div>
+                    </div>
+                    <p>Template 6</p>
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('bgCanvas');
+        const ctx = canvas.getContext('2d');
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+
+        const particles = [];
+        const particleCount = 100;
+
+        class Particle {
+            constructor() {
+                this.x = Math.random() * canvas.width;
+                this.y = Math.random() * canvas.height;
+                this.size = Math.random() * 5 + 1;
+                this.speedX = Math.random() * 3 - 1.5;
+                this.speedY = Math.random() * 3 - 1.5;
+            }
+
+            update() {
+                this.x += this.speedX;
+                this.y += this.speedY;
+
+                if (this.size > 0.2) this.size -= 0.1;
+
+                if (this.x < 0 || this.x > canvas.width) this.speedX *= -1;
+                if (this.y < 0 || this.y > canvas.height) this.speedY *= -1;
+            }
+
+            draw() {
+                ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+                ctx.closePath();
+                ctx.fill();
+            }
+        }
+
+        function init() {
+            for (let i = 0; i < particleCount; i++) {
+                particles.push(new Particle());
+            }
+        }
+
+        function animate() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            for (let i = 0; i < particles.length; i++) {
+                particles[i].update();
+                particles[i].draw();
+
+                for (let j = i; j < particles.length; j++) {
+                    const dx = particles[i].x - particles[j].x;
+                    const dy = particles[i].y - particles[j].y;
+                    const distance = Math.sqrt(dx * dx + dy * dy);
+
+                    if (distance < 100) {
+                        ctx.beginPath();
+                        ctx.strokeStyle = `rgba(255, 255, 255, ${1 - distance / 100})`;
+                        ctx.lineWidth = 0.5;
+                        ctx.moveTo(particles[i].x, particles[i].y);
+                        ctx.lineTo(particles[j].x, particles[j].y);
+                        ctx.stroke();
+                        ctx.closePath();
+                    }
+                }
+            }
+            requestAnimationFrame(animate);
+        }
+
+        init();
+        animate();
+
+        window.addEventListener('resize', () => {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+            init();
+        });
+
+        // Template selection and page switching functionality
+        document.querySelectorAll('.template').forEach(template => {
+            const templateId = template.dataset.templateId;
+            const useTemplateBtn = template.querySelector('.use-template-btn');
+            const leftSwitcher = template.querySelector('.page-switcher.left');
+            const rightSwitcher = template.querySelector('.page-switcher.right');
+            let currentPage = 1;
+
+            useTemplateBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                window.location.href = template.querySelector('a').href;
+            });
+
+            leftSwitcher.addEventListener('click', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                if (currentPage > 1) {
+                    currentPage--;
+                    updateTemplatePage(template, templateId, currentPage);
+                }
+            });
+
+            rightSwitcher.addEventListener('click', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                if (currentPage < 3) { // Assuming each template has 3 pages
+                    currentPage++;
+                    updateTemplatePage(template, templateId, currentPage);
+                }
+            });
+        });
+
+        function updateTemplatePage(template, templateId, page) {
+            const img = template.querySelector('img');
+            img.src = `{% static 'images/template${templateId}_page${page}.jpg' %}`;
+            img.alt = `Template ${templateId} - Page ${page}`;
+        }
+    </script>
+</body>
+</html>

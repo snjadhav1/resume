@@ -1,0 +1,557 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OptiCV - ATS-Friendly Resume Builder</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/0.5.0-beta4/html2canvas.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            height: 100vh;
+        }
+        
+        #form-container {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+            background: linear-gradient(to right, #000000, #0000FF);
+            color: white;
+        }
+        
+        #preview-container {
+            flex: 1;
+            padding: 20px;
+            background-color: white;
+            overflow-y: auto;
+        }
+        
+        .form-step {
+            display: none;
+        }
+        
+        .form-step.active {
+            display: block;
+        }
+        
+        input, textarea, select {
+            width: 100%;
+            padding: 8px;
+            margin-bottom: 10px;
+            background-color: rgba(255, 255, 255, 0.1);
+            color: white;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+        }
+        
+        input::placeholder, textarea::placeholder {
+            color: #999;
+        }
+        
+        button {
+            background-color: blue;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            cursor: pointer;
+        }
+        
+        #preview {
+            background-color: white;
+            padding: 20px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+            color: black;
+        }
+        
+        /* Updated Resume Styles */
+        #preview {
+            display: flex;
+            flex-direction: column;
+        }
+        
+        #preview-header {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        
+        #preview-header h1 {
+            color: #f0a500;
+            margin-bottom: 5px;
+        }
+        
+        #preview-header h2 {
+            margin-top: 0;
+            font-weight: normal;
+        }
+        
+        #preview-content {
+            display: flex;
+        }
+        
+        #preview-left {
+            flex: 1;
+            padding-right: 20px;
+            border-right: 1px solid #ccc;
+        }
+        
+        #preview-right {
+            flex: 1;
+            padding-left: 20px;
+        }
+        
+        .section {
+            margin-bottom: 20px;
+        }
+        
+        .section h3 {
+            color: #f0a500;
+            border-bottom: 2px solid #f0a500;
+            padding-bottom: 5px;
+            text-transform: uppercase;
+        }
+        
+        ul {
+            list-style-type: none;
+            padding-left: 0;
+            margin-top: 5px;
+        }
+        
+        #previewSkills li, #previewLanguages li {
+            margin-bottom: 5px;
+        }
+        
+        #previewJobTitle {
+            font-weight: bold;
+            margin-bottom: 0;
+        }
+        
+        #previewCompany, #previewWorkDates {
+            margin-top: 0;
+            margin-bottom: 5px;
+        }
+        
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0,0,0,0.4);
+        }
+        
+        .modal-content {
+            background-color: #fefefe;
+            margin: 15% auto;
+            padding: 20px;
+            border: 1px solid #888;
+            width: 80%;
+        }
+        
+        .modal-buttons {
+            text-align: center;
+            margin-top: 20px;
+        }
+        
+        .modal-buttons button {
+            margin: 0 10px;
+        }
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.6);
+            overflow: auto;
+        }
+        
+        .modal-content {
+            background-color: #fefefe;
+            margin: 5% auto;
+            padding: 20px;
+            border: 1px solid #888;
+            width: 80%;
+            max-width: 800px;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        
+        .preview-modal-content {
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+        
+        .success-modal-content {
+            text-align: center;
+            padding: 40px 20px;
+        }
+        
+        .modal-buttons {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            margin-top: 20px;
+        }
+        
+        .modal-buttons button {
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+        
+        .modal-buttons .primary-button {
+            background-color: #0066cc;
+            color: white;
+        }
+        
+        .modal-buttons .secondary-button {
+            background-color: #666;
+            color: white;
+        }
+        
+        .success-message {
+            font-size: 24px;
+            color: #2ecc71;
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div id="form-container">
+        <div class="form-step active" id="step1">
+            <h2>Personal Information</h2>
+            <input type="text" id="name" placeholder="Full Name" required>
+            <input type="email" id="email" placeholder="Email" required>
+            <input type="tel" id="phone" placeholder="Phone" required>
+            <input type="text" id="location" placeholder="Location" required>
+            <input type="text" id="linkedin" placeholder="LinkedIn URL" required>
+            <input type="text" id="jobTitle" placeholder="Job Title" required>
+            <textarea id="summary" placeholder="Professional Summary" required></textarea>
+            <button id="enhance-summary" type="button">Enhance with AI</button>
+            <button onclick="nextStep(2)">Next</button>
+        </div>
+
+        <div class="form-step" id="step2">
+            <h2>Skills & Languages</h2>
+            <textarea id="skills" placeholder="Enter your skills (comma-separated)" required></textarea>
+            <input type="text" id="languages" placeholder="Enter languages (comma-separated or press Enter)" required>
+            <button onclick="prevStep(1)">Previous</button>
+            <button onclick="nextStep(3)">Next</button>
+        </div>
+
+        <div class="form-step" id="step3">
+            <h2>Education</h2>
+            <input type="text" id="university" placeholder="University Name" required>
+            <input type="text" id="degree" placeholder="Degree" required>
+            <input type="text" id="gradYear" placeholder="Graduation Year" required>
+            <button onclick="prevStep(2)">Previous</button>
+            <button onclick="nextStep(4)">Next</button>
+        </div>
+
+        <div class="form-step" id="step4">
+            <h2>Work Experience</h2>
+            <input type="text" id="company" placeholder="Company Name" required>
+            <input type="text" id="workDates" placeholder="Employment Dates" required>
+            <input type="text" id="workJobTitle" placeholder="Job Title" required>
+            <textarea id="jobDescription" placeholder="Job Description (one point per line)" required></textarea>
+            <button id="enhance-jobDescription" type="button">Enhance with AI</button>
+            <button onclick="prevStep(3)">Previous</button>
+            <button onclick="previewResume()">Preview Resume</button>
+        </div>
+    </div>
+</div>
+
+<div id="modal" class="modal">
+    <div class="modal-content">
+        <div id="modal-preview"></div>
+        <div class="modal-buttons">
+            <button class="secondary" onclick="closeModal()">Keep Editing</button>
+            <button onclick="downloadResume()">Download</button>
+        </div>
+    </div>
+</div>
+<!-- Modal for Success Message -->
+<div id="download-message" class="modal">
+    <div class="modal-content">
+        <div class="success-message">
+            <p>Resume downloaded successfully! 🎉</p>
+        </div>
+        <div class="modal-buttons">
+            <button class="secondary" onclick="continueEditing()">Continue Editing</button>
+            <button onclick="goToHome()">Go to Home</button>
+        </div>
+    </div>
+</div>
+    <div id="preview-container">
+        <div id="preview">
+            <div id="preview-header">
+                <h1 id="previewName">Victor Brandon</h1>
+                <h2 id="previewJobTitle">BACK-END DEVELOPER</h2>
+            </div>
+            <div id="preview-content">
+                <div id="preview-left">
+                    <div class="section">
+                        <h3>SUMMARY</h3>
+                        <p id="previewSummary">Highly skilled Back-End Developer with 5+ years of experience in designing and developing complex web applications. Proficient in Python, PHP, and Java, with a strong understanding of database management systems. Proven track record of delivering high-quality projects on time and within budget. Excellent problem-solving and communication skills, with a strong attention to detail. A team player who thrives in fast-paced environments.</p>
+                    </div>
+                    <div class="section">
+                        <h3>CONTACT</h3>
+                        <p id="previewContact">info@resumekraft.com<br>202-555-0120<br>Chicago, Illinois, US<br>linkedin.com/resumekraft</p>
+                    </div>
+                    <div class="section">
+                        <h3>SKILLS</h3>
+                        <ul id="previewSkills">
+                            <li>Programming Languages (e.g., Java, Python)</li>
+                            <li>Database Management (e.g., SQL)</li>
+                            <li>Serverside Frameworks (e.g., Node.js)</li>
+                            <li>RESTful APIs</li>
+                            <li>Version Control (e.g., Git)</li>
+                            <li>Web Security</li>
+                            <li>Cloud Computing</li>
+                            <li>Performance Optimization</li>
+                            <li>Debugging and Troubleshooting</li>
+                            <li>Agile Development</li>
+                        </ul>
+                    </div>
+                    <div class="section">
+                        <h3>LANGUAGES</h3>
+                        <ul id="previewLanguages">
+                            <li>English</li>
+                            <li>French</li>
+                            <li>Arabic</li>
+                            <li>German</li>
+                        </ul>
+                    </div>
+                </div>
+                <div id="preview-right">
+                    <div class="section">
+                        <h3>EDUCATION</h3>
+                        <p id="previewEducation">San Jose State University<br>Nov 2015 - Sep 2021<br>Bachelor in Computer Science</p>
+                    </div>
+                    <div class="section">
+                        <h3>EXPERIENCE</h3>
+                        <h4 id="previewCompany">IBM</h4>
+                        <p id="previewWorkDates">Jun 2022 - Present</p>
+                        <p id="previewExperienceJobTitle"><strong>Back-End Developer</strong></p>
+                        <ul id="previewJobDescription">
+                            <li>Experience developing and maintaining serverside applications</li>
+                            <li>Strong knowledge of programming languages such as Java, Python, Ruby, or Node.js</li>
+                            <li>Proficiency in database management and query optimization (e.g. MySQL, MongoDB)</li>
+                            <li>Experience with web frameworks such as Django, Spring, or Express</li>
+                            <li>Understanding of version control systems (e.g. Git)</li>
+                            <li>Testing and debugging skills to identify and fix issues in code</li>
+                            <li>Familiarity with frontend technologies and ability to collaborate with frontend developers to integrate user-facing elements with server-side logic</li>
+                            <li>Design and implementation of data storage solutions and ensuring data security and integrity</li>
+                            <li>Collaboration with cross-functional teams to define, design, and ship new features</li>
+                            <li>Continuous monitoring and performance optimization of applications to ensure scalability and efficiency</li>
+                            <li>Troubleshooting and resolution of server-side performance bottlenecks</li>
+                            <li>Up to date knowledge of industry trends and best practices to continually improve the development process and stay current with emerging technologies.</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+
+    <script>
+        function nextStep(step) {
+            document.querySelector('.form-step.active').classList.remove('active');
+            document.getElementById('step' + step).classList.add('active');
+            updatePreview();
+        }
+
+        function prevStep(step) {
+            document.querySelector('.form-step.active').classList.remove('active');
+            document.getElementById('step' + step).classList.add('active');
+        }
+
+        function updatePreview() {
+            document.getElementById('previewName').textContent = document.getElementById('name').value || 'Victor Brandon';
+            const jobTitle = document.getElementById('jobTitle').value || 'BACK-END DEVELOPER';
+            document.getElementById('previewJobTitle').textContent = jobTitle.toUpperCase();
+            document.getElementById('previewContact').innerHTML = `${document.getElementById('email').value || 'info@resumekraft.com'}<br>${document.getElementById('phone').value || '202-555-0120'}<br>${document.getElementById('location').value || 'Chicago, Illinois, US'}<br>${document.getElementById('linkedin').value || 'linkedin.com/resumekraft'}`;
+            document.getElementById('previewSummary').textContent = document.getElementById('summary').value || 'Highly skilled Back-End Developer with 5+ years of experience in designing and developing complex web applications. Proficient in Python, PHP, and Java, with a strong understanding of database management systems. Proven track record of delivering high-quality projects on time and within budget. Excellent problem-solving and communication skills, with a strong attention to detail. A team player who thrives in fast-paced environments.';
+            document.getElementById('previewEducation').innerHTML = `${document.getElementById('university').value || 'San Jose State University'}<br>${document.getElementById('gradYear').value || 'Nov 2015 - Sep 2021'}<br>${document.getElementById('degree').value || 'Bachelor in Computer Science'}`;
+            document.getElementById('previewCompany').textContent = document.getElementById('company').value || 'IBM';
+            document.getElementById('previewWorkDates').textContent = document.getElementById('workDates').value || 'Jun 2022 - Present';
+            document.getElementById('previewExperienceJobTitle').innerHTML = `<strong>${document.getElementById('workJobTitle').value || 'Back-End Developer'}</strong>`;
+            
+            const jobDescription = document.getElementById('jobDescription').value;
+            if (jobDescription) {
+                document.getElementById('previewJobDescription').innerHTML = jobDescription.split('\n').map(item => `<li>${item}</li>`).join('');
+            }
+
+            const skills = document.getElementById('skills').value;
+            if (skills) {
+                document.getElementById('previewSkills').innerHTML = skills.split(',').map(skill => `<li>${skill.trim()}</li>`).join('');
+            }
+
+            const languages = document.getElementById('languages').value;
+            if (languages) {
+                document.getElementById('previewLanguages').innerHTML = languages.split(',').map(language => `<li>${language.trim()}</li>`).join('');
+            }
+        }
+        function previewResume() {
+            updatePreview();
+            const modal = document.getElementById('modal');
+            const modalPreview = document.getElementById('modal-preview');
+            const previewContent = document.getElementById('preview').cloneNode(true);
+            modalPreview.innerHTML = '';
+            modalPreview.appendChild(previewContent);
+            modal.style.display = 'block';
+        }
+
+        function closeModal() {
+            document.getElementById('modal').style.display = 'none';
+        }
+
+        function showDownloadMessage() {
+            document.getElementById('download-message').style.display = 'block';
+        }
+
+        function continueEditing() {
+            document.getElementById('download-message').style.display = 'none';
+            document.getElementById('modal').style.display = 'none';
+        }
+
+        function goToHome() {
+            window.location.href = '{% url "home" %}';
+        }
+        
+
+        function downloadResume() {
+            updatePreview();
+            const element = document.getElementById('preview');
+            const pdfWidth = 210; // A4 width in mm
+            const pdfHeight = 297; // A4 height in mm
+            const scaleFactor = 2;
+
+            html2canvas(element, {
+                scale: scaleFactor,
+                useCORS: true,
+                logging: false,
+                windowWidth: element.scrollWidth,
+                windowHeight: element.scrollHeight
+            }).then(canvas => {
+                const imgData = canvas.toDataURL('image/png');
+                const pdf = new jspdf.jsPDF({
+                    orientation: 'portrait',
+                    unit: 'mm',
+                    format: 'a4'
+                });
+
+                const imgWidth = pdfWidth;
+                const imgHeight = (canvas.height * pdfWidth) / canvas.width;
+                let position = 0;
+                let heightLeft = imgHeight;
+
+                pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight, '', 'FAST');
+                heightLeft -= pdfHeight;
+
+                while (heightLeft >= 0) {
+                    position = heightLeft - imgHeight;
+                    pdf.addPage();
+                    pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight, '', 'FAST');
+                    heightLeft -= pdfHeight;
+                }
+
+                pdf.save('professional_resume.pdf');
+                closeModal();
+                showDownloadMessage();
+            }).catch(err => {
+                console.error('Error generating PDF:', err);
+                alert('An error occurred while generating the PDF. Please try again.');
+            });
+        }
+
+function enhanceText(id) {
+    const enhanceButton = document.getElementById('enhance-' + id);
+    const text = document.getElementById(id).value;
+
+    enhanceButton.textContent = 'Enhancing...';
+    enhanceButton.disabled = true;
+
+    fetch('/enhance-text/', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+            'X-CSRFToken': getCookie('csrftoken')
+        },
+        body: `text=${encodeURIComponent(text)}`
+    })
+    .then(response => {
+        if (!response.ok) {
+            throw new Error('Network response was not ok');
+        }
+        return response.json();
+    })
+    .then(data => {
+        document.getElementById(id).value = data.enhanced_text;
+        updatePreview();
+    })
+    .catch(error => {
+        console.error('Error:', error);
+    })
+    .finally(() => {
+        enhanceButton.textContent = 'Enhance with AI';
+        enhanceButton.disabled = false;
+    });
+}
+
+
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+document.getElementById('enhance-summary').addEventListener('click', () => enhanceText('summary'));
+document.getElementById('enhance-jobDescription').addEventListener('click', () => enhanceText('jobDescription'));
+
+
+        // Add event listeners to all input fields
+        const inputs = document.querySelectorAll('input, textarea, select');
+        inputs.forEach(input => {
+            input.addEventListener('input', updatePreview);
+        });
+
+        // Add event listener for languages input
+        const languagesInput = document.getElementById('languages');
+        languagesInput.addEventListener('keydown', function(event) {
+            if (event.key === 'Enter' || event.key === ',') {
+                event.preventDefault();
+                const currentValue = this.value.trim();
+                const lastCommaIndex = currentValue.lastIndexOf(',');
+                const newLanguage = lastCommaIndex !== -1 ? currentValue.slice(lastCommaIndex + 1).trim() : currentValue;
+                
+                if (newLanguage) {
+                    this.value = lastCommaIndex !== -1 ? 
+                        currentValue.slice(0, lastCommaIndex + 1) + ' ' + newLanguage + ', ' : 
+                        newLanguage + ', ';
+                }
+                updatePreview();
+            }
+        });
+
+        // Initial preview update
+        updatePreview();
+    </script>
+</body>
+</html>

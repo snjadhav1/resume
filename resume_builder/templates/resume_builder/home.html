@@ -1,0 +1,622 @@
+{% load static %}
+{% block content %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OptiCV - ATS-Friendly Resume Builder</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.11.4/gsap.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.11.4/ScrollTrigger.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/particles.js/2.0.0/particles.min.js"></script>
+    <style>
+        :root {
+            --primary-color: #4a90e2;
+            --secondary-color: #f39c12;
+            --text-color: #ffffff;
+            --bg-color: #1a1a2e;
+            --card-bg: rgba(255, 255, 255, 0.1);
+            --white: #ffffff;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Arial', sans-serif;
+            line-height: 1.6;
+            color: var(--text-color);
+            background-color: var(--bg-color);
+            overflow-x: hidden;
+        }
+
+        #particles-js {
+            position: fixed;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+
+        header {
+            background-color: rgba(26, 26, 46, 0.8);
+            backdrop-filter: blur(10px);
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            position: fixed;
+            width: 100%;
+            z-index: 1000;
+        }
+
+        nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px 0;
+        }
+
+        .logo {
+            font-size: 28px;
+            font-weight: bold;
+            color: var(--primary-color);
+            text-shadow: 0 0 10px rgba(74, 144, 226, 0.5);
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 30px;
+        }
+
+        .nav-links a {
+            text-decoration: none;
+            color: var(--text-color);
+            font-weight: 500;
+            transition: color 0.3s ease, transform 0.3s ease;
+        }
+
+        .nav-links a:hover {
+            color: var(--primary-color);
+            transform: translateY(-2px);
+        }
+
+        .apply-btn {
+            background-color: var(--primary-color);
+            color: var(--white);
+            padding: 12px 25px;
+            border-radius: 25px;
+            text-decoration: none;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(74, 144, 226, 0.3);
+        }
+
+        .apply-btn:hover {
+            background-color: #3a7bc8;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(74, 144, 226, 0.4);
+        }
+
+        .hero {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+            padding: 100px 0;
+        }
+
+        .hero::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(135deg, rgba(74, 144, 226, 0.2), rgba(243, 156, 18, 0.2));
+            z-index: -1;
+        }
+
+        .hero-content {
+            max-width: 800px;
+        }
+
+        .hero h1 {
+            font-size: 56px;
+            margin-bottom: 20px;
+            text-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+        }
+
+        .hero p {
+            font-size: 20px;
+            margin-bottom: 40px;
+        }
+
+        .cta-btn {
+            display: inline-block;
+            background-color: var(--secondary-color);
+            color: var(--white);
+            padding: 15px 40px;
+            border-radius: 30px;
+            text-decoration: none;
+            font-weight: bold;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(243, 156, 18, 0.3);
+        }
+
+        .cta-btn:hover {
+            background-color: #e67e22;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(243, 156, 18, 0.4);
+        }
+
+        .section-title {
+            font-size: 36px;
+            margin-bottom: 40px;
+            text-align: center;
+        }
+
+        .why-ats, .how-it-works, .features, .testimonials, .why-choose-us, .pricing, .faq, .cta-section {
+            padding: 100px 0;
+        }
+
+        .why-ats-content, .how-it-works-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 40px;
+        }
+
+        .why-ats-text, .how-it-works-text {
+            flex: 1;
+        }
+
+        .why-ats-image, .how-it-works-image {
+            flex: 1;
+        }
+
+        .why-ats-image img, .how-it-works-image img {
+            max-width: 100%;
+            border-radius: 10px;
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+        }
+
+        .bullet-points {
+            list-style-type: none;
+            padding-left: 20px;
+        }
+
+        .bullet-points li {
+            position: relative;
+            padding-left: 30px;
+            margin-bottom: 15px;
+        }
+
+        .bullet-points li::before {
+            content: '✓';
+            position: absolute;
+            left: 0;
+            color: var(--secondary-color);
+            font-weight: bold;
+        }
+
+        .step {
+            display: flex;
+            align-items: center;
+            margin-bottom: 30px;
+        }
+
+        .step-number {
+            background-color: var(--secondary-color);
+            color: var(--white);
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-weight: bold;
+            margin-right: 20px;
+        }
+
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 30px;
+        }
+
+        .feature {
+            background-color: var(--card-bg);
+            padding: 30px;
+            border-radius: 10px;
+            text-align: center;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .feature:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+        }
+
+        .feature-icon {
+            font-size: 48px;
+            margin-bottom: 20px;
+        }
+
+        .testimonials {
+            text-align: center;
+        }
+
+        .testimonial {
+            background-color: var(--card-bg);
+            padding: 30px;
+            border-radius: 10px;
+            margin-bottom: 30px;
+        }
+
+        .testimonial-content {
+            font-style: italic;
+            margin-bottom: 20px;
+        }
+
+        .testimonial-author {
+            font-weight: bold;
+        }
+
+        .pricing-plans {
+            display: flex;
+            justify-content: center;
+            gap: 30px;
+        }
+
+        .pricing-plan {
+            background-color: var(--card-bg);
+            padding: 40px;
+            border-radius: 10px;
+            text-align: center;
+            flex: 1;
+            max-width: 300px;
+        }
+
+        .plan-name {
+            font-size: 24px;
+            margin-bottom: 10px;
+        }
+
+        .plan-price {
+            font-size: 36px;
+            font-weight: bold;
+            margin-bottom: 20px;
+        }
+
+        .plan-features {
+            list-style-type: none;
+            padding: 0;
+            margin-bottom: 30px;
+        }
+
+        .plan-features li {
+            margin-bottom: 10px;
+        }
+
+        .faq-item {
+            background-color: var(--card-bg);
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            cursor: pointer;
+        }
+
+        .faq-question {
+            font-size: 18px;
+            margin-bottom: 10px;
+        }
+
+        .faq-answer {
+            display: none;
+        }
+
+        .cta-section {
+            text-align: center;
+        }
+
+        footer {
+            background-color: rgba(26, 26, 46, 0.8);
+            padding: 40px 0;
+            text-align: center;
+        }
+
+        .footer-links, .social-links {
+            margin-bottom: 20px;
+        }
+
+        .footer-links a, .social-links a {
+            color: var(--text-color);
+            text-decoration: none;
+            margin: 0 10px;
+        }
+
+        .footer-links a:hover, .social-links a:hover {
+            color: var(--primary-color);
+        }
+    </style>
+</head>
+<body>
+    <div id="particles-js"></div>
+
+    <header>
+        <nav class="container">
+            <div class="logo">OptiCV</div>
+            <div class="nav-links">
+                <a href="#home">Home</a>
+                <a href="#features">Features</a>
+                <a href="#why-ats">Why ATS</a>
+                <a href="#how-it-works">How It Works</a>
+                <a href="{% url 'template_selection' %}" class="apply-btn">Apply Now</a>
+               
+            </div>
+        </nav>
+    </header>
+
+    <main>
+        <section id="home" class="hero">
+            <div class="container">
+                <div class="hero-content">
+                    <h1>Create Your Perfect ATS-Friendly Resume in Minutes!</h1>
+                    <p>Designed to help you get past the applicant tracking system and land your dream job!</p>
+                    <a href="#get-started" class="cta-btn">Start Building Now</a>
+                </div>
+            </div>
+        </section>
+
+        <section id="why-ats" class="why-ats">
+            <div class="container">
+                <h2 class="section-title">Why You Need an ATS-Friendly Resume</h2>
+                <div class="why-ats-content">
+                    <div class="why-ats-text">
+                        <p>In today's competitive job market, getting your resume past Applicant Tracking Systems (ATS) is crucial. Traditional resumes often fail to make it through these digital gatekeepers.</p>
+                        <ul class="bullet-points">
+                            <li>75% of resumes are rejected before reaching a human recruiter.</li>
+                            <li>ATS-friendly designs improve your chances of being seen.</li>
+                            <li>We ensure your resume is structured to pass the ATS filters.</li>
+                        </ul>
+                    </div>
+                    <div class="why-ats-image">
+                        <img src="{% static 'images/ats.png' %}" alt="ATS filtering process visualization">
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="how-it-works" class="how-it-works">
+            <div class="container">
+                <h2 class="section-title">How Our Resume Builder Works</h2>
+                <div class="how-it-works-content">
+                    <div class="how-it-works-text">
+                        <div class="step">
+                            <div class="step-number">1</div>
+                            <div class="step-description">Choose a professionally designed ATS-friendly template.</div>
+                        </div>
+                        <div class="step">
+                            <div class="step-number">2</div>
+                            <div class="step-description">Add your personal and professional details using our simple form.</div>
+                        </div>
+                        <div class="step">
+                            <div class="step-number">3</div>
+                            <div class="step-description">Download your resume as a PDF or directly share it with employers.</div>
+                        </div>
+                    </div>
+                    <div class="how-it-works-image">
+                        <img src="{% static 'images/resume_build.png' %}" alt="Resume builder process visualization">
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="features" class="features">
+            <div class="container">
+                <h2 class="section-title">Our Key Features</h2>
+                <div class="features-grid">
+                    <div class="feature">
+                        <div class="feature-icon">📄</div>
+                        <h3>ATS-friendly templates</h3>
+                        <p>Our templates are designed to pass through Applicant Tracking Systems with ease.</p>
+                    </div>
+                    <div class="feature">
+                        <div class="feature-icon">📊</div>
+                        <h3>Industry-standard formatting</h3>
+                        <p>We use formatting that is recognized and preferred by recruiters and ATS alike.</p>
+                    </div>
+                    <div class="feature">
+                        <div class="feature-icon">💡</div>
+                        <h3>Real-time feedback and tips</h3>
+                        <p>Get instant suggestions to improve your resume as you build it.</p>
+                    </div>
+                    <div class="feature">
+                        <div class="feature-icon">🔍</div>
+                        <h3>Resume analytics</h3>
+                        <p>Gain insights into how your resume performs and areas for improvement.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+   
+
+    <section id="why-choose-us" class="why-choose-us">
+        <div class="container">
+            <h2 class="section-title">Why Choose Us?</h2>
+            <ul class="bullet-points">
+                <li>Tailored for job seekers in all industries</li>
+                <li>Affordable and Free options available</li>
+                <li>Fast and easy-to-use interface</li>
+                <li>Designed by resume experts</li>
+                <li>100% ATS-compliant</li>
+            </ul>
+        </div>
+    </section>
+
+   
+
+    <section id="faq" class="faq">
+        <div class="container">
+            <h2 class="section-title">Frequently Asked Questions</h2>
+            <div class="faq-item">
+                <h3 class="faq-question">What is an ATS-friendly resume?</h3>
+                <p class="faq-answer">An ATS-friendly resume is designed to be easily read and parsed by Applicant Tracking Systems, increasing your chances of getting past the initial screening process.</p>
+            </div>
+            <div class="faq-item">
+                <h3 class="faq-question">Do I need an ATS-friendly resume?</h3>
+                <p class="faq-answer">Yes, most companies use ATS to screen resumes. An ATS-friendly resume ensures your application isn't rejected before a human sees it.</p>
+            </div>
+            <div class="faq-item">
+                <h3 class="faq-question">How do I download my resume?</h3>
+                <p class="faq-answer">Once you've completed your resume, simply click the "Download" button to save it as a PDF file.</p>
+            </div>
+            <div class="faq-item">
+                <h3 class="faq-question">Can I customize my resume?</h3>
+                <p class="faq-answer">Yes, our builder allows for customization while maintaining ATS-friendly formatting.</p>
+            </div>
+        </div>
+    </section>
+
+    <section id="cta" class="cta-section">
+        <div class="container">
+            <h2 class="section-title">Ready to Get Noticed by Recruiters?</h2>
+            <a href="{% url 'template_selection' %}" class="cta-btn">Build Your Resume Now</a>
+        </div>
+    </section>
+</main>
+
+<footer>
+    <div class="container">
+        <div class="footer-links">
+            <a href="#">About Us</a>
+            <a href="#">Privacy Policy</a>
+            <a href="#">Terms of Service</a>
+            <a href="#">Contact Us</a>
+        </div>
+        <div class="social-links">
+            <a href="#" aria-label="LinkedIn">📱</a>
+            <a href="#" aria-label="Twitter">🐦</a>
+            <a href="#" aria-label="Facebook">👍</a>
+        </div>
+        <p>&copy; 2024 OptiCV. All rights reserved.</p>
+    </div>
+</footer>
+
+<script>
+    particlesJS('particles-js', {
+        particles: {
+            number: { value: 80, density: { enable: true, value_area: 800 } },
+            color: { value: "#ffffff" },
+            shape: { type: "circle", stroke: { width: 0, color: "#000000" }, polygon: { nb_sides: 5 }, image: { src: "img/github.svg", width: 100, height: 100 } },
+            opacity: { value: 0.5, random: false, anim: { enable: false, speed: 1, opacity_min: 0.1, sync: false } },
+            size: { value: 3, random: true, anim: { enable: false, speed: 40, size_min: 0.1, sync: false } },
+            line_linked: { enable: true, distance: 150, color: "#ffffff", opacity: 0.4, width: 1 },
+            move: { enable: true, speed: 6, direction: "none", random: false, straight: false, out_mode: "out", bounce: false, attract: { enable: false, rotateX: 600, rotateY: 1200 } }
+        },
+        interactivity: {
+            detect_on: "canvas",
+            events: { onhover: { enable: true, mode: "repulse" }, onclick: { enable: true, mode: "push" }, resize: true },
+            modes: { grab: { distance: 400, line_linked: { opacity: 1 } }, bubble: { distance: 400, size: 40, duration: 2, opacity: 8, speed: 3 }, repulse: { distance: 200, duration: 0.4 }, push: { particles_nb: 4 }, remove: { particles_nb: 2 } }
+        },
+        retina_detect: true
+    });
+
+    gsap.registerPlugin(ScrollTrigger);
+
+    gsap.from(".hero-content", {
+        opacity: 0,
+        y: 50,
+        duration: 1,
+        delay: 0.5
+    });
+
+    gsap.from(".hero p", {
+        opacity: 0,
+        y: 50,
+        duration: 1,
+        delay: 0.7
+    });
+
+    gsap.from(".hero .cta-btn", {
+        opacity: 0,
+        y: 50,
+        duration: 1,
+        delay: 0.9
+    });
+
+    gsap.from(".feature", {
+        opacity: 0,
+        y: 50,
+        duration: 1,
+        stagger: 0.2,
+        scrollTrigger: {
+            trigger: ".features",
+            start: "top 80%"
+        }
+    });
+
+    gsap.from(".why-ats-content, .how-it-works-content", {
+        opacity: 0,
+        y: 50,
+        duration: 1,
+        scrollTrigger: {
+            trigger: ".why-ats, .how-it-works",
+            start: "top 80%"
+        }
+    });
+
+    gsap.from(".testimonial", {
+        opacity: 0,
+        y: 50,
+        duration: 1,
+        stagger: 0.2,
+        scrollTrigger: {
+            trigger: ".testimonials",
+            start: "top 80%"
+        }
+    });
+
+    gsap.from(".pricing-plan", {
+        opacity: 0,
+        y: 50,
+        duration: 1,
+        stagger: 0.2,
+        scrollTrigger: {
+            trigger: ".pricing",
+            start: "top 80%"
+        }
+    });
+
+    gsap.from(".faq-item", {
+        opacity: 0,
+        y: 50,
+        duration: 1,
+        stagger: 0.2,
+        scrollTrigger: {
+            trigger: ".faq",
+            start: "top 80%"
+        }
+    });
+
+    // FAQ toggle functionality
+    document.querySelectorAll('.faq-item').forEach(item => {
+        item.addEventListener('click', () => {
+            const answer = item.querySelector('.faq-answer');
+            answer.style.display = answer.style.display === 'block' ? 'none' : 'block';
+        });
+    });
+</script>
+</body>
+</html>
+{% endblock %}
