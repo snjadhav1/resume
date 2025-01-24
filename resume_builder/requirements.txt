@@ -5,3 +5,4 @@ gunicorn
 google-cloud-aiplatform
 google-auth
 google-auth-oauthlib
+google-generativeai
